@@ -3,6 +3,7 @@ import {NextRequest,NextResponse} from 'next/server';
 import {getPool} from '@/lib/db';
 const scrypt=(password:string,salt:string)=>new Promise<Buffer>((resolve,reject)=>scryptCallback(password,salt,64,{N:16384,r:8,p:1,maxmem:32*1024*1024},(error,derived)=>error?reject(error):resolve(derived)));
 const COOKIE='sp_session';
+const WORKSPACE_COOKIE='sp_workspace';
 const TTL=60*60*24*7;
 export type Principal={id:string;email:string;displayName:string;workspaceId:string;role:'owner'|'editor'|'viewer'};
 const hex=(input:string)=>createHash('sha256').update(input).digest('hex');
@@ -44,6 +45,9 @@ export async function startSession(userId:string,response:NextResponse){
   const signed=id+'.'+token+'.'+sign(id+'.'+token);
   await getPool().query('INSERT INTO local_sessions(user_id,token_hash,expires_at) VALUES($1,$2,now()+interval \'7 days\')',[userId,hex(id+'.'+token)]);
   response.cookies.set(COOKIE,signed,{httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax',path:'/',maxAge:TTL});
+  // A browser may previously have selected another user's workspace.
+  // Never carry that choice into the new account's session.
+  response.cookies.set(WORKSPACE_COOKIE,'',{httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax',path:'/',maxAge:0});
 }
 export async function revokeSession(request:NextRequest){
   const value=request.cookies.get(COOKIE)?.value;
@@ -76,7 +80,8 @@ export async function memberships(userId:string){
 export async function authorize(request:NextRequest,required:'viewer'|'editor'='viewer'):Promise<Principal|null>{
   const user=await identity(request);
   if(!user)return null;
-  const chosen=request.headers.get('x-workspace-id')||request.nextUrl.searchParams.get('workspaceId');
+  const chosen=request.headers.get('x-workspace-id')||request.nextUrl.searchParams.get('workspaceId')||request.cookies.get(WORKSPACE_COOKIE)?.value;
+  if(chosen&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(chosen))return null;
   const result=await getPool().query<{workspaceId:string;role:Principal['role']}>(
     'SELECT workspace_id AS "workspaceId",role FROM local_workspace_members WHERE user_id=$1 AND ($2::uuid IS NULL OR workspace_id=$2::uuid) ORDER BY created_at ASC LIMIT 1',
     [user.id,chosen||null]
@@ -89,6 +94,11 @@ export async function authenticated(request:NextRequest){
   const user=await identity(request);
   if(!user)return null;
   const workspaces=await memberships(user.id);
-  return {user,workspaces,activeWorkspaceId:workspaces[0]?.id??null};
+  const selected=request.cookies.get(WORKSPACE_COOKIE)?.value;
+  return {user,workspaces,activeWorkspaceId:workspaces.some(w=>w.id===selected)?selected:workspaces[0]?.id??null};
 }
-export function clearSession(response:NextResponse){response.cookies.set(COOKIE,'',{httpOnly:true,path:'/',sameSite:'lax',maxAge:0,secure:process.env.NODE_ENV==='production'})}
+export function setWorkspaceCookie(response:NextResponse,workspaceId:string){response.cookies.set(WORKSPACE_COOKIE,workspaceId,{httpOnly:true,path:'/',sameSite:'lax',secure:process.env.NODE_ENV==='production',maxAge:TTL});}
+export function clearSession(response:NextResponse){
+  response.cookies.set(COOKIE,'',{httpOnly:true,path:'/',sameSite:'lax',maxAge:0,secure:process.env.NODE_ENV==='production'});
+  response.cookies.set(WORKSPACE_COOKIE,'',{httpOnly:true,path:'/',sameSite:'lax',maxAge:0,secure:process.env.NODE_ENV==='production'});
+}

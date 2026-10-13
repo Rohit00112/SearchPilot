@@ -288,3 +288,29 @@ body { color: var(--ui-ink); background: var(--ui-canvas); }
 .app-shell .project-create strong,.app-shell .project-card small,
 .app-shell footer,.app-shell footer span{color:var(--sp-text-muted)}
 .app-shell .upgrade button{color:var(--sp-accent-subtle-text)}
+/* Browser-verified WCAG AA secondary text on light cards (2026-10-13). */
+.app-shell .project-card>p,
+.app-shell .project-card-foot>span,
+.app-shell .domain-heading p,
+.app-shell .panel-head p,
+.app-shell .legend span,
+.app-shell .data-table th,
+.app-shell .data-table td,
+.app-shell .functional-caption,
+.app-shell .audit-score p,
+.app-shell .audit-item p,
+.app-shell .audit-item small,
+.app-shell .report-notes p,
+.app-shell .health-wrap p,
+.app-shell .health-stats span,
+.app-shell .distribution,
+.app-shell .account-details p,
+.app-shell .settings-fields p,
+.app-shell .project-create small,
+.app-shell .table-tools,
+.app-shell .metric-bottom small {
+  color:#4c596d;
+}
+@media(max-width:800px){
+  .auth-mobile-brand span{color:#5540b0;}
+}

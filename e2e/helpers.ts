@@ -1,4 +1,4 @@
-import {expect,test as base,type Page} from '@playwright/test';
+import {expect,test as base,type Page,type Cookie} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import {mkdir} from 'node:fs/promises';
 import path from 'node:path';
@@ -36,7 +36,14 @@ export async function axe(page:Page){
 export async function expectSample(page:Page){
   await expect(page.getByText(/sample analytics|sample data|illustrative/i).first()).toBeVisible();
 }
+let seededCookies:Cookie[]=[];
 export async function loginIfConfigured(page:Page){
+  if(seededCookies.length){
+    await page.context().addCookies(seededCookies);
+    await page.goto('/');
+    await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
+    return true;
+  }
   const email=process.env.SEARCHPILOT_E2E_EMAIL;
   const password=process.env.SEARCHPILOT_E2E_PASSWORD;
   if(!email||!password)return false;
@@ -44,6 +51,8 @@ export async function loginIfConfigured(page:Page){
   await page.getByRole('textbox',{name:'Email address'}).fill(email);
   await page.locator('input[autocomplete="current-password"]').fill(password);
   await page.getByRole('button',{name:'Sign in'}).click();
-  await expect(page).toHaveURL(/127\.0\.0\.1:3122\/$/);
+  const expectedOrigin=new URL(process.env.SEARCHPILOT_E2E_URL||'http://127.0.0.1:3122').origin;
+  await expect(page).toHaveURL(url=>url.origin===expectedOrigin&&url.pathname==='/');
+  seededCookies=await page.context().cookies();
   return true;
 }

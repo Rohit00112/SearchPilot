@@ -13,6 +13,11 @@ const names = [
   '002_rank_reports',
   '003_security_limits',
   '004_gsc',
+  '005_seo_features',
+  '006_reports',
+  '007_audit_jobs',
+  '008_workspace_collaboration',
+  '009_strategy_reviews',
 ];
 const base = { tables: ['projects', 'keywords', 'audits'] };
 const expected = {
@@ -36,6 +41,37 @@ const expected = {
   '004_gsc': {
     tables: ['gsc_connections', 'gsc_oauth_states', 'gsc_performance'],
     indexes: ['gsc_connections_workspace', 'gsc_oauth_states_expiry', 'gsc_performance_workspace_date'],
+  },
+  '005_seo_features': {
+    tables: ['seo_tracking_campaigns','seo_tracking_keywords','seo_import_batches',
+      'seo_organic_observations','seo_keyword_research','seo_backlink_observations'],
+    indexes: ['seo_campaigns_project_status','seo_tracking_keywords_campaign',
+      'seo_batches_project_recent','seo_organic_history','seo_keyword_research_recent',
+      'seo_backlinks_recent','seo_backlinks_referrer'],
+    constraints: ['seo_campaign_project_fk','seo_tracked_campaign_fk'],
+  },
+  '006_reports': {
+    tables: ['report_definitions'],
+    indexes: ['report_definitions_workspace_project'],
+    constraints: ['report_definitions_project_scope'],
+  },
+  '007_audit_jobs': {
+    tables: ['seo_crawl_jobs','seo_crawl_pages','seo_crawl_issues'],
+    indexes: ['seo_crawl_jobs_queue','seo_crawl_jobs_project','seo_crawl_jobs_active_project',
+      'seo_crawl_pages_job','seo_crawl_issues_job'],
+    constraints: ['seo_crawl_project_scope','seo_crawl_pages_job_scope','seo_crawl_issues_page_scope'],
+    triggers: ['seo_crawl_page_limit'],
+  },
+  '008_workspace_collaboration': {
+    tables: ['workspace_invitations'],
+    indexes: ['workspace_invitations_scope','workspace_invitations_expiry'],
+  },
+  '009_strategy_reviews': {
+    tables: ['seo_strategy_lists','seo_strategy_clusters','seo_strategy_keywords','seo_backlink_reviews'],
+    indexes: ['seo_strategy_lists_project','seo_strategy_clusters_list','seo_strategy_keywords_list',
+      'seo_backlink_reviews_project','seo_backlinks_workspace_project_id'],
+    constraints: ['seo_strategy_list_project_scope','seo_strategy_cluster_list_scope',
+      'seo_strategy_keyword_list_scope','seo_strategy_keyword_cluster_scope','seo_review_backlink_tenant_scope'],
   },
 };
 const migrationFiles = names.map(name => ({

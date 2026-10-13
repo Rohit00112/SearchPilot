@@ -15,7 +15,26 @@ export function object(value:unknown):Record<string,unknown> {
 }
 export async function jsonBody(request:Request):Promise<Record<string,unknown>> {
   if(!request.headers.get('content-type')?.toLowerCase().includes('application/json'))throw new ValidationError('Content-Type must be application/json.',415);
-  try{return object(await request.json());}catch(error){if(error instanceof ValidationError)throw error;throw new ValidationError('Invalid JSON request body.');}
+  const maxBytes=64*1024;
+  const declared=request.headers.get('content-length');
+  if(declared && (/^\d+$/.test(declared)) && Number(declared)>maxBytes)throw new ValidationError('JSON request body exceeds 64 KiB.',413);
+  const reader=request.body?.getReader();
+  if(!reader)throw new ValidationError('Missing JSON request body.');
+  const chunks:Uint8Array[]=[];
+  let size=0;
+  try {
+    while(true) {
+      const {done,value}=await reader.read();
+      if(done)break;
+      size+=value.byteLength;
+      if(size>maxBytes){await reader.cancel();throw new ValidationError('JSON request body exceeds 64 KiB.',413);}
+      chunks.push(value);
+    }
+    const joined=new Uint8Array(size);
+    let cursor=0;
+    for(const chunk of chunks){joined.set(chunk,cursor);cursor+=chunk.byteLength;}
+    return object(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(joined)));
+  }catch(error){if(error instanceof ValidationError)throw error;throw new ValidationError('Invalid JSON request body.');}
 }
 export function textField(value:unknown,label:string,max:number):string {
   if(typeof value!=='string'||!value.trim()||value.trim().length>max)throw new ValidationError(`${label} must have 1–${max} characters.`);
