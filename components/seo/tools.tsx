@@ -2,6 +2,7 @@ import Link from 'next/link';
 import {Badge,Card} from '@/components/ui';
 import {Search,BarChart3,Link2,Target,ShieldCheck,ArrowRight,Network,Scale,GitCompare,ScanSearch} from 'lucide-react';
 const tools=[
+ {href:'/opportunities',name:'Search Console opportunities',description:'Prioritize queries from your own saved Google impressions and clicks. Suggestions are labelled heuristics, not market keyword volumes.',icon:Search},
  {href:'/keyword-magic',name:'Keyword research',description:'Review tracked terms and, when available, user-imported keyword research.',icon:Search},
  {href:'/keyword-strategy',name:'Keyword strategy builder',description:'Create editorial topic groups and assign manually entered keywords and priorities.',icon:Network},
  {href:'/organic-rankings',name:'Organic rankings',description:'View available first-party and user-imported observations with source labels.',icon:BarChart3},

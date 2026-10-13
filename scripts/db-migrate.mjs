@@ -18,6 +18,7 @@ const names = [
   '007_audit_jobs',
   '008_workspace_collaboration',
   '009_strategy_reviews',
+  '010_report_shares',
 ];
 const base = { tables: ['projects', 'keywords', 'audits'] };
 const expected = {
@@ -72,6 +73,11 @@ const expected = {
       'seo_backlink_reviews_project','seo_backlinks_workspace_project_id'],
     constraints: ['seo_strategy_list_project_scope','seo_strategy_cluster_list_scope',
       'seo_strategy_keyword_list_scope','seo_strategy_keyword_cluster_scope','seo_review_backlink_tenant_scope'],
+  },
+  '010_report_shares': {
+    tables: ['report_shares'],
+    indexes: ['report_shares_workspace_report', 'report_shares_expiry', 'report_shares_token_hash_key'],
+    constraints: ['report_shares_report_scope', 'report_shares_max_expiry'],
   },
 };
 const migrationFiles = names.map(name => ({

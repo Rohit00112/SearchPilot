@@ -53,7 +53,7 @@ Deliverables:
 - SVG symbol: `public/brand/searchpilot-mark.svg` and Next favicon `app/icon.svg`.
 - SVG wordmark: `public/brand/searchpilot-wordmark.svg`.
 - Square 1024px opaque app icon / Apple icon: `public/brand/searchpilot-app-icon.png`, `app/apple-icon.png`.
-- Original 1200×630 SVG social card: `public/brand/searchpilot-social.svg` (PNG share-card and final accessibility review remain to do).
+- Original 1200×630 SVG social card: `public/brand/searchpilot-social.svg` (PNG social card now available at public/brand/searchpilot-social.png; final accessibility/browser review remains).
 - Web app manifest: `app/manifest.ts`; title/description/icons/Open Graph metadata in `app/layout.tsx`.
 
 Before publication, compare the mark visually side-by-side with competitor logos, commission legal and design clearance, and regenerate the wordmark / favicon filenames if the company name changes.
@@ -91,4 +91,4 @@ Command: `python3 "$HOME/Library/Application Support/chat-on-steroids/skills/rep
 
 Result (2026-10-13): **Clean — no Semrush names, semrush.com domain or declared original colors found in application code/assets**. By design the sweep ignores the planning documentation, which discusses competitive references. It also cannot detect visual resemblance or product-name collisions: that requires the separate trademark/logo review above.
 
-**Launch blockers:** existing SearchPilot name conflict, unscreened replacement name/domains/store/handles, final UI snapshot and full WCAG browser review, production social PNG, and complete cleanup of older hard-coded violet demo CSS. Next handoff to `/replica-launch` only after brand clearance, ideally with a new name.
+**Launch blockers:** existing SearchPilot name conflict, unscreened replacement name/domains/store/handles, final UI snapshot and full WCAG browser review, and complete cleanup of older hard-coded violet demo CSS. Next handoff to `/replica-launch` only after brand clearance, ideally with a new name.

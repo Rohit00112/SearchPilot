@@ -8,6 +8,7 @@ type Project={id:string;name:string;domain:string};
 type Keyword={keyword:string;position:number|null;volume:number|null;difficulty:number|null};
 type Audit={id:string;score:number;domain:string;checkedAt:string;checks:{name:string;status:string;recommendation:string}[]};
 type Report={id:string;projectId:string;title:string;blocks:ReportSection[];updatedAt:string};
+type Share={id:string;reportId:string;createdAt:string;expiresAt:string;revokedAt:string|null};
 type Source='reports'|'keywords'|'audits'|'rankings';
 type ProjectData={
   projectId:string;
@@ -34,6 +35,7 @@ export default function ReportBuilder(){
   const [projectData,setProjectData]=useState<ProjectData|null>(null);
   const [title,setTitle]=useState(reportPresets[0].title),[blocks,setBlocks]=useState<ReportSection[]>([...reportPresets[0].blocks]),[selected,setSelected]=useState('');
   const [notes,setNotes]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[success,setSuccess]=useState('');
+  const [shares,setShares]=useState<Share[]>([]),[shareTtl,setShareTtl]=useState(7),[shareConsent,setShareConsent]=useState(false),[shareUrl,setShareUrl]=useState('');
   const [initialized,setInitialized]=useState(false);
   const project=projects.find(p=>p.id===projectId);
   // Render only data that matches the selected project, including before the next effect runs.
@@ -83,6 +85,7 @@ export default function ReportBuilder(){
   },[projectId]);
   function applyPreset(preset:typeof reportPresets[number]){
     setSelected('');
+    setShares([]);setShareUrl('');setShareConsent(false);
     setTitle(preset.title);
     setBlocks([...preset.blocks]);
     setSuccess(`${preset.name} preset applied. Edit the layout before saving or printing.`);
@@ -91,13 +94,45 @@ export default function ReportBuilder(){
   function chooseProject(nextId:string){
     setProjectId(nextId);
     setSelected('');
+    setShares([]);setShareUrl('');setShareConsent(false);
     setNotes('');
     setTitle(reportPresets[0].title);
     setBlocks([...reportPresets[0].blocks]);
     setError('');
     setSuccess('');
   }
-  function loadReport(report:Report){setSelected(report.id);setTitle(report.title);setBlocks(report.blocks);setSuccess('Loaded saved report layout.');}
+  function loadReport(report:Report){setSelected(report.id);setTitle(report.title);setBlocks(report.blocks);setShares([]);setShareUrl('');setShareConsent(false);setSuccess('Loaded saved report layout.');}
+  const listShares=useCallback(async(reportId:string)=>{
+    const result=await api<{shares:Share[]}>(`/api/report-shares?reportId=${encodeURIComponent(reportId)}`);
+    setShares(result.shares);
+  },[]);
+  useEffect(()=>{
+    if(!selected){setShares([]);return;}
+    let active=true;
+    void api<{shares:Share[]}>(`/api/report-shares?reportId=${encodeURIComponent(selected)}`)
+      .then(result=>{if(active)setShares(result.shares);})
+      .catch(e=>{if(active)setError(getError(e));});
+    return()=>{active=false;};
+  },[selected]);
+  async function createShare(){
+    if(!selected||!shareConsent)return;
+    setBusy(true);setError('');setSuccess('');setShareUrl('');
+    try{
+      const result=await api<{token:string}>('/api/report-shares',config('POST',{reportId:selected,ttlDays:shareTtl,acknowledgeLimitedShare:true}));
+      setShareUrl(`${window.location.origin}/shared-report/${result.token}`);
+      await listShares(selected);
+      setShareConsent(false);
+      setSuccess('Limited read-only link created. Copy it now; the token cannot be retrieved later.');
+    }catch(e){setError(getError(e));}finally{setBusy(false);}
+  }
+  async function revokeShare(id:string){
+    if(!selected)return;
+    setBusy(true);setError('');setSuccess('');
+    try{
+      await api(`/api/report-shares?id=${encodeURIComponent(id)}`,{method:'DELETE'});
+      setShareUrl('');await listShares(selected);setSuccess('Share link revoked.');
+    }catch(e){setError(getError(e));}finally{setBusy(false);}
+  }
   function move(index:number,delta:number){setBlocks(current=>{const next=[...current],target=index+delta;if(target<0||target>=next.length)return current;[next[index],next[target]]=[next[target],next[index]];return next;});}
   async function save(){
     if(!projectId||!title.trim()||!blocks.length)return;
@@ -161,6 +196,22 @@ export default function ReportBuilder(){
           </div>
         </div>
       </div>
+      <section className="mt-5 space-y-3 rounded-xl border bg-white p-5">
+        <h2 className="text-base font-semibold">Optional read-only share link</h2>
+        <p className="text-sm text-slate-600">Reports are private by default. Create a link only when you want anyone holding it to see the saved report title, project domain, and section headings. Keywords, audits, rankings, author notes, Search Console data, and workspace records stay private. No email is sent.</p>
+        {!selected?<p className="text-sm text-slate-600">Save a report layout first to enable sharing.</p>:<>
+          <label className="block text-sm">Expiry
+            <select className="ml-3 rounded border p-2" value={shareTtl} disabled={busy} onChange={e=>setShareTtl(Number(e.target.value))}>
+              {[1,3,7,14,30].map(days=><option key={days} value={days}>{days} day{days===1?'':'s'}</option>)}
+            </select>
+          </label>
+          <label className="flex items-start gap-2 text-sm"><input className="mt-1" type="checkbox" checked={shareConsent} disabled={busy} onChange={e=>setShareConsent(e.target.checked)}/><span>I explicitly approve sharing this title, project domain and section headings with anyone who has the link.</span></label>
+          <button type="button" className="rounded bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50" disabled={busy||!shareConsent} onClick={()=>void createShare()}>Create expiring share link</button>
+          {shareUrl&&<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm"><p className="mb-2 font-semibold">Copy this link now. It will not be shown again.</p><input aria-label="New share URL" readOnly className="w-full rounded border p-2" value={shareUrl} onFocus={e=>e.target.select()}/><button type="button" className="mt-2 rounded border bg-white px-3 py-1.5" onClick={()=>void navigator.clipboard.writeText(shareUrl)}>Copy link</button></div>}
+          <h3 className="text-sm font-semibold">Previous links</h3>
+          {shares.length===0?<p className="text-sm text-slate-500">No share links for this saved layout.</p>:<ul className="space-y-2">{shares.map(share=><li key={share.id} className="flex flex-wrap items-center justify-between gap-2 rounded border p-3 text-sm"><span>Expires {new Date(share.expiresAt).toLocaleString()} · {share.revokedAt?'Revoked':new Date(share.expiresAt).getTime()<=Date.now()?'Expired':'Active'}</span>{!share.revokedAt&&new Date(share.expiresAt).getTime()>Date.now()&&<button type="button" disabled={busy} className="rounded border border-red-300 px-3 py-1 text-red-700 disabled:opacity-50" onClick={()=>void revokeShare(share.id)}>Revoke</button>}</li>)}</ul>}
+        </>}
+      </section>
     </div>
     <article className="report-paper mx-auto max-w-4xl space-y-6 rounded-xl border bg-white p-6 shadow-md md:p-12">
       <header className="border-b pb-5"><p className="text-xs font-bold uppercase tracking-widest text-indigo-700">SearchPilot / Project report</p><h2 className="my-3 text-3xl font-bold">{title||'Untitled report'}</h2><p className="text-sm text-slate-600">{project?project.domain:'Select a workspace project'} · Prepared {new Date().toLocaleDateString()}</p><p className="mt-2 text-xs text-slate-500">Sources: project records, manually entered keyword fields and ranking observations, saved automated homepage checks, and local author notes. No verified SERP, traffic, or backlink metrics.</p></header>

@@ -8,9 +8,12 @@ export async function GET(request:NextRequest){
  try{
   const user=await authorize(request);if(!user)return NextResponse.json({error:"Authentication required."},{status:401});
   const from=request.nextUrl.searchParams.get("from"),to=request.nextUrl.searchParams.get("to");
+  const property=request.nextUrl.searchParams.get("property");
   if(!from||!to||!dateOk(from)||!dateOk(to)||from>to)return NextResponse.json({error:"Provide valid from and to dates."},{status:400});
-  const {rows}=await getPool().query("SELECT metric_date AS date,query,page,country,device,clicks,impressions,ctr,average_position AS \"averagePosition\",collected_at AS \"collectedAt\" FROM gsc_performance WHERE workspace_id=$1 AND metric_date BETWEEN $2 AND $3 ORDER BY metric_date DESC LIMIT 1000",[user.workspaceId,from,to]);
-  return NextResponse.json({rows:rows.map(r=>({...r,source:"google_search_console",sample:false})),source:"google_search_console",sample:false,limited:true});
+  if(property&&(property.length>500||!(property.startsWith("sc-domain:")||/^https:\/\//.test(property))))
+    return NextResponse.json({error:"Invalid property filter."},{status:400});
+  const {rows}=await getPool().query("SELECT metric_date AS date,property_uri AS property,query,page,country,device,clicks,impressions,ctr,average_position AS \"averagePosition\",collected_at AS \"collectedAt\" FROM gsc_performance WHERE workspace_id=$1 AND metric_date BETWEEN $2 AND $3 AND ($4::text IS NULL OR property_uri=$4) ORDER BY metric_date DESC LIMIT 1000",[user.workspaceId,from,to,property??null]);
+  return NextResponse.json({rows:rows.map(r=>({...r,source:"google_search_console",sample:false})),propertyFilter:property??null,source:"google_search_console",sample:false,limited:true},{headers:{"Cache-Control":"private, no-store"}});
  }catch{return NextResponse.json({error:"Unable to read search performance."},{status:503})}
 }
 export async function POST(request:NextRequest){

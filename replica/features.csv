@@ -1,9 +1,9 @@
 feature,area,priority,original,clone,notes
 "Folder list, search and selection",workspace,must,yes,partial,P02; searchable projects and persistent active selection; folder tags/pins absent
 Create and rename site workspaces,workspace,must,yes,partial,P02; project create and rename/update/delete available; full folder tags/sharing not implemented
-Folder sharing and access roles,workspace,should,yes,partial,"Owner/editor/viewer permissions, one-time invited email verification and member-management UI now present; email sending and report link sharing not connected."
+Folder sharing and access roles,workspace,should,yes,partial,Owner/editor/viewer invitations and authenticated workspace switching; opt-in revocable report-outline bearer links. Automated invitations/email and complete folder sharing absent.
 SEO overview dashboard,overview,must,yes,partial,"P03; synthetic sample metrics, no connected analytics"
-Analytics source and freshness badges,overview,must,inferred,partial,SearchPilot-specific integrity requirement; sample badge exists
+Analytics source and freshness badges,overview,must,inferred,partial,"Source/freshness explicitly shown for GSC opportunities, imported research and manual position history; full metric-level audit elsewhere remains."
 Domain overview research,domain,must,yes,no,"P04; existing domain screen is illustrative only, with static traffic, authority, backlink and keyword estimates; no measured domain-research provider"
 Organic rankings overview and positions,organic rankings,must,yes,no,P05/P06; no independent rankings index
 Organic position changes historical filters,organic rankings,should,yes,no,P07; requires longitudinal ranking observations
@@ -15,8 +15,8 @@ Keyword Gap between competitor sites,competitive research,should,yes,partial,Two
 Create tracked keyword with project,tracking,must,yes,yes,P13/P14; PostgreSQL keyword rows; manually supplied attributes
 Remove tracked keyword,tracking,must,yes,yes,"P13/P14; local API delete, separate from Semrush behavior"
 Tracking campaign target engine device locale,tracking,must,yes,yes,"Tenant-scoped campaign config with engine, device, country and locale plus imported observations; not automated SERP sampling."
-Position Tracking rank snapshot dashboard,tracking,must,yes,partial,"P14; local manually populated ranking, trend illustrative"
-Position Tracking timeseries and rank changes,tracking,must,yes,partial,"P14; tenant-scoped /api/rankings supports stored manual timestamped observations, but UI charts remain static SAMPLE and historical comparison is not wired to API"
+Position Tracking rank snapshot dashboard,tracking,must,yes,partial,"Authenticated UI shows actual saved manual latest ranking/previous delta, not demo chart; automatic device/locale SERP observation remains unavailable."
+Position Tracking timeseries and rank changes,tracking,must,yes,partial,"Authenticated /position-tracking now renders API-backed manually recorded timestamps, positions, deltas and entry notes with source labels. Provider-observed SERP changes remain unavailable."
 Position Tracking competitor discovery,tracking,could,yes,no,P14; requires observed SERP datasets
 Position Tracking Landscape overview,tracking,should,yes,no,P15; no dedicated page
 Position Tracking keyword tags and notes,tracking,should,yes,no,P14; no persistent annotation model
@@ -30,9 +30,9 @@ Backlinks Overview metrics and visualizations,backlinks,must,yes,no,"P20; cards 
 Backlinks and referring domains table,backlinks,must,yes,no,"P21; visible referring-domain rows are static illustrative names; no real backlinks, filters, provenance or source drilldown"
 Backlink Audit review workflow,backlinks,should,yes,yes,Persistent human-only review labels and notes on imported backlinks; no calculated toxicity or automated disavow.
 Backlink Gap competitor comparison,backlinks,could,yes,partial,Two owned projects can compare user-imported referring domains; no licensed competitor backlink index.
-Reports gallery and templated editor,reports,should,yes,partial,"Saved editable report layouts plus Solo Snapshot and Client Update presets; limited set, no automated multi-widget gallery."
-Report export and scheduling,reports,should,yes,partial,Tenant-scoped CSV export keywords/manual rank history; PDF/scheduling absent
-Google Search Console and Analytics integrations,integrations,should,yes,partial,"P03/S31; official GSC OAuth/properties/performance backend exists but live OAuth unverified, no connect/property UI, and Google Analytics integration absent"
+Reports gallery and templated editor,reports,should,yes,partial,"Saved editable templates and browser PDF, explicit expiring limited-scope report-outline shares (title/domain/headings only). No full report recipient sharing, scheduled delivery or large gallery."
+Report export and scheduling,reports,should,yes,partial,"Tenant-scoped CSV and browser Save-PDF, plus limited read-only expiring outline links; automated email/report scheduler still absent."
+Google Search Console and Analytics integrations,integrations,should,yes,partial,"GSC OAuth/property selection/import UI, stored performance property filter and query opportunities exist; live Google OAuth not tested and Analytics integration absent."
 Responsiveness and accessibility states,ui,must,inferred,partial,SearchPilot design requirement; inferred exact Semrush mobile states
 Performance under plan quotas,plans,could,yes,no,P10/P13; product-specific quota design
 AI Visibility toolkit,expansion,could,yes,no,P01/P27; separate product area
