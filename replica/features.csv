@@ -1,0 +1,45 @@
+feature,area,priority,original,clone,notes
+"Folder list, search and selection",workspace,must,yes,partial,P02; project list persists; Semrush-style folder tags/pins absent
+Create and rename site workspaces,workspace,must,yes,partial,P02; create available; rename/delete/settings incomplete
+Folder sharing and access roles,workspace,should,yes,no,P02; Viewer/Editor role workflow
+SEO overview dashboard,overview,must,yes,partial,"P03; synthetic sample metrics, no connected analytics"
+Analytics source and freshness badges,overview,must,inferred,partial,SearchPilot-specific integrity requirement; sample badge exists
+Domain overview research,domain,must,yes,partial,P04; sample cards only; no provider measurements
+Organic rankings overview and positions,organic rankings,must,yes,no,P05/P06; no independent rankings index
+Organic position changes historical filters,organic rankings,should,yes,no,P07; requires longitudinal ranking observations
+Keyword overview SERP and difficulty,keywords,should,yes,no,P08; needs licensed SERP/volume source
+Keyword Magic seed search and groups,keywords,must,yes,partial,"P09/P10; keyword tracking UI exists, no generated research dataset"
+"Keyword Magic match, intent and difficulty filters",keywords,should,yes,no,P09/P10; not implemented as source-driven search
+Keyword Strategy Builder and clusters,keywords,should,yes,no,P11; pillar/topic cluster future phase
+Keyword Gap between competitor sites,competitive research,should,yes,no,P12; separate SERP dataset required
+Create tracked keyword with project,tracking,must,yes,yes,P13/P14; PostgreSQL keyword rows; manually supplied attributes
+Remove tracked keyword,tracking,must,yes,yes,"P13/P14; local API delete, separate from Semrush behavior"
+Tracking campaign target engine device locale,tracking,must,yes,no,P13; existing project no engine/device/locale campaign config
+Position Tracking rank snapshot dashboard,tracking,must,yes,partial,"P14; local manually populated ranking, trend illustrative"
+Position Tracking timeseries and rank changes,tracking,must,yes,no,P14; no collected historical positions
+Position Tracking competitor discovery,tracking,could,yes,no,P14; requires observed SERP datasets
+Position Tracking Landscape overview,tracking,should,yes,no,P15; no dedicated page
+Position Tracking keyword tags and notes,tracking,should,yes,no,P14; no persistent annotation model
+Site Audit configuration and schedule,audit,must,yes,partial,"P16; user can input domain, no crawl config/scheduler"
+On-demand homepage HTML checks,audit,must,yes,yes,P17; SearchPilot performs original 1-page checks
+Site Audit issue severity and explanations,audit,must,yes,partial,P18; recommendation text exists; no full issue taxonomy
+Site Audit crawled pages and comparisons,audit,should,yes,no,P17/P19; no multi-page crawl/history comparison
+Site Audit thematic reports,audit,should,yes,no,P17; technical crawlability/HTTPS etc beyond homepage
+Audit history persisted in PostgreSQL,audit,must,yes,yes,SearchPilot-specific schema; PostgreSQL if configured
+Backlinks Overview metrics and visualizations,backlinks,must,yes,partial,P20; illustrative mock data only
+Backlinks and referring domains table,backlinks,must,yes,partial,P21; illustrative table; no actual backlink index
+Backlink Audit review workflow,backlinks,should,yes,no,P22/P23; toxicity is never automatically authoritative
+Backlink Gap competitor comparison,backlinks,could,yes,no,P24; licensed or independent link data required
+Reports gallery and templated editor,reports,should,yes,partial,P25; simplified report screen only
+Report export and scheduling,reports,should,yes,partial,P25; keyword CSV export; PDF/scheduling unavailable
+Google Search Console and Analytics integrations,integrations,should,yes,no,P03; requires user OAuth permission
+Responsiveness and accessibility states,ui,must,inferred,partial,SearchPilot design requirement; inferred exact Semrush mobile states
+Performance under plan quotas,plans,could,yes,no,P10/P13; product-specific quota design
+AI Visibility toolkit,expansion,could,yes,no,P01/P27; separate product area
+Traffic and market intelligence toolkit,expansion,could,yes,no,P01/P27; separate product area
+Content and social toolkits,expansion,could,yes,no,P01/P27; separate product area
+Advertising and local toolkits,expansion,could,yes,no,P01/P27; separate product area
+Semrush proprietary datasets and historical metrics,licensed data,skip,yes,skip,Cannot transfer/use private historical indexes
+Semrush branded UI artwork and trademarks,branding,skip,yes,skip,Original product assets must be independently authored
+Authenticated internal UI and private endpoints,private,skip,unverified,skip,Public references only; no private sessions or APIs
+Existing user network and partner agreements,partners,skip,yes,skip,Not transferable to independently built SearchPilot

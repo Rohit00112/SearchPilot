@@ -1,0 +1,35 @@
+/* SearchPilot semantic tokens. Maintained alongside tokens.json. */
+:root {
+  --sp-bg: #F7F8FC;
+  --sp-surface: #FFFFFF;
+  --sp-surface-muted: #F1F3F9;
+  --sp-border: #DCE1EC;
+  --sp-border-input: #778398;
+  --sp-text: #20243A;
+  --sp-text-muted: #586278;
+  --sp-accent: #5840C9;
+  --sp-on-accent: #FFFFFF;
+  --sp-accent-subtle: #EEEAFF;
+  --sp-accent-subtle-text: #4932A6;
+  --sp-danger: #B42336;
+  --sp-danger-subtle: #FFF0F1;
+  --sp-success: #176D55;
+  --sp-success-subtle: #E5F7EF;
+  --sp-warning: #815315;
+  --sp-warning-subtle: #FFF2DB;
+  --sp-focus: #5840C9;
+  --sp-nav-bg: #211B43;
+  --sp-nav-text: #F8F7FF;
+  --sp-nav-muted: #D9D3EC;
+  --sp-chart-a: #5840C9;
+  --sp-chart-b: #087F83;
+  --sp-chart-c: #D1C8F8;
+  --sp-radius-sm:6px;
+  --sp-radius-md:10px;
+  --sp-radius-lg:14px;
+  --sp-radius-xl:20px;
+  --sp-shadow-sm:0 2px 8px rgba(26,31,55,.05);
+  --sp-shadow-md:0 10px 25px rgba(26,31,55,.08);
+  --sp-motion-fast:120ms;
+  --sp-motion-normal:200ms;
+}
