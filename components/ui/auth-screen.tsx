@@ -37,7 +37,7 @@ export default function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
       const response = await fetch(`/api/auth/${mode}`, {
         method: 'POST', credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mode === 'register' ? { name: name.trim(), email: email.trim().toLowerCase(), password } : { email: email.trim().toLowerCase(), password }),
+        body: JSON.stringify(mode === 'register' ? { displayName: name.trim(), email: email.trim().toLowerCase(), password } : { email: email.trim().toLowerCase(), password }),
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) throw new Error(typeof data?.error === 'string' ? data.error : (typeof data?.error?.message === 'string' ? data.error.message : 'Unable to sign in. Try again.'));

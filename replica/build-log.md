@@ -5,9 +5,9 @@ Date: 2026-10-13. Statuses reflect actual SearchPilot implementation, not Semrus
 | Screen | Status | Working implementation / remaining work |
 | --- | --- | --- |
 | S01 Marketing home | not started | Current `/` is authenticated-workspace-style dashboard; no public marketing landing |
-| S02 Account entry | in progress | Authentication screens and server sessions under implementation |
-| S03 Folder/workspace list | partial | `/projects` lists and selects projects; sharing/tags not yet present |
-| S04 Project creation/settings | partial | Create project via `/api/projects`; edit/delete and permissions planned |
+| S02 Account entry | done (local accounts) | Login/register connected to hashed-password sessions; recovery/email verification remain |
+| S03 Folder/workspace list | partial | Searchable project list, active selection; sharing/tags not yet present |
+| S04 Project creation/settings | partial | Authenticated create/rename/delete; full folder settings/sharing planned |
 | S05 SEO Dashboard | partial | Live project/keyword counts, illustrative traffic charts, current audit where available |
 | S06 Domain Overview | partial | Domain overview UI with demonstrative estimates; no licensed domain dataset |
 | S07 Organic Rankings overview | not started | Requires sourced search performance/rank provider |
@@ -19,14 +19,22 @@ Date: 2026-10-13. Statuses reflect actual SearchPilot implementation, not Semrus
 | S13 Site Audit Overview | partial | Single-page homepage audit results; crawler pending |
 | S14 Site Audit setup | partial | User-entered domain; multi-page scope/schedule pending |
 | S15 Report builder | partial | Summary UI and CSV; editable PDF composition pending |
-| S16 Workspace permissions | in progress | Account settings first; sharing RBAC later |
-| S17 Rank campaign setup | partial | Manual keyword tracking, locale/device configuration pending |
+| S16 Workspace permissions | partial | Backend owner/editor/viewer scoping; invitations and collaborator UI planned |
+| S17 Rank campaign setup | partial | Manual keyword position/volume/difficulty entry; locale/device campaigns pending |
 | S18 Rank Tracking overview | partial | Manual positions and illustrative trend; actual rank collection pending |
 | S19 Rank Tracking table | partial | Existing keyword positions; historical movement unavailable |
 | S20 Rank Tracking competitors | not started | Provider-backed comparative positions needed |
 | S21 Position landscape | not started | Dependent on rank observations |
 | S22 Rank notes/tags | not started | Needs annotation persistence |
-| S23 Audit issues | partial | Audit check list with recommendations; affected-page crawler pending |
+| S23 Audit issues | partial | Filterable findings and expandable recommendations; multi-page crawler pending |
+
+## Build iteration — 2026-10-13
+
+- Added `/login`, `/register`, `/settings`, `/account` and PostgreSQL-backed local authentication with signed, revocable sessions.
+- Added `db/migrations/001_local_auth_workspaces.sql` for members and tenant-owned project, keyword and audit rows. Legacy records without owners remain inaccessible until explicitly migrated.
+- Enhanced searchable/selectable projects with PATCH rename/delete, keyword position/difficulty filters, manual keyword values, audit history and detailed findings. Charts and unlicensed analytics remain labeled **sample**.
+- Verified baseline plus additive schema in an isolated PostgreSQL database; anonymous projects GET returned 401; local registration 201, login 200, authenticated project GET 200 and project POST 201. `npm run lint` and `npm run build` passed.
+- Not implemented: external keyword/backlink/rank datasets, scheduled crawler, team invitation UI, Google Search Console OAuth, PDF report scheduler. Browser screenshot diff and full cross-tenant end-to-end automation pending. No Git commits: `/reverse` is not a repository.
 | S24 Audit themes | not started | Requires multi-page audit rules |
 | S25 Crawled pages/history | not started | Single-page audit only today |
 | S26 Backlinks overview | partial | Sample dashboards; independent backlink index not connected |

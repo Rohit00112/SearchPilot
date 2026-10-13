@@ -19,9 +19,14 @@ PostgreSQL initializes automatically from `db/schema.sql` when the Docker volume
 
 ```bash
 docker compose exec -T postgres psql -U searchpilot -d searchpilot < db/schema.sql
+
+# Then apply the additive local-auth migration to the SAME existing database:
+docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U searchpilot -d searchpilot < db/migrations/001_local_auth_workspaces.sql
 ```
 
-If you prefer to inspect the UI without running a database, omit `.env.local` and launch `npm run dev`. Read endpoints then return clearly labeled demo data. Saving projects and keywords requires PostgreSQL; one-off site audits remain available without it.
+Configure `AUTH_SECRET` as an unpredictable 32+ character string (for example generate one with `openssl rand -hex 32`). Set `APP_ORIGIN=http://localhost:3000` for local same-origin mutation protection; set the exact public HTTPS origin behind a production proxy. Do not commit secrets. Authentication routes are `POST /api/auth/register` (`{email,password,displayName}`), `POST /api/auth/login` (`{email,password}`), `POST /api/auth/logout` (empty JSON body), and `GET /api/auth/me`. Passwords require 12–256 characters. Sessions use signed HttpOnly SameSite=Lax cookies backed by revocable database session records. Browser mutation requests must supply a same-origin `Origin` header. Responses from registration/login/me contain `{user,workspaces,activeWorkspaceId}`; `me` also returns `authenticated:true`. Provide optional `x-workspace-id` on project/keyword/audit requests to choose among authorized workspaces, otherwise the oldest membership is used. Viewers can read, while owners/editors can modify. Unknown legacy projects retain `workspace_id=NULL` and are invisible; the migration never claims them for a newly registered user.
+
+To inspect fixture data **without any `DATABASE_URL`**, run `NODE_ENV=development SEARCHPILOT_DEMO=true npm run dev`; the read endpoints then return clearly labeled demo data. Demo writes remain unavailable, except for ephemeral on-demand audit results. With `DATABASE_URL` present, authentication is required for persisted data; an unavailable DB never falls back to private data fixtures.
 
 ## Scripts
 

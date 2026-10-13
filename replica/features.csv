@@ -1,6 +1,6 @@
 feature,area,priority,original,clone,notes
-"Folder list, search and selection",workspace,must,yes,partial,P02; project list persists; Semrush-style folder tags/pins absent
-Create and rename site workspaces,workspace,must,yes,partial,P02; create available; rename/delete/settings incomplete
+"Folder list, search and selection",workspace,must,yes,partial,P02; searchable projects and persistent active selection; folder tags/pins absent
+Create and rename site workspaces,workspace,must,yes,partial,P02; project create and rename/update/delete available; full folder tags/sharing not implemented
 Folder sharing and access roles,workspace,should,yes,no,P02; Viewer/Editor role workflow
 SEO overview dashboard,overview,must,yes,partial,"P03; synthetic sample metrics, no connected analytics"
 Analytics source and freshness badges,overview,must,inferred,partial,SearchPilot-specific integrity requirement; sample badge exists
@@ -9,7 +9,7 @@ Organic rankings overview and positions,organic rankings,must,yes,no,P05/P06; no
 Organic position changes historical filters,organic rankings,should,yes,no,P07; requires longitudinal ranking observations
 Keyword overview SERP and difficulty,keywords,should,yes,no,P08; needs licensed SERP/volume source
 Keyword Magic seed search and groups,keywords,must,yes,partial,"P09/P10; keyword tracking UI exists, no generated research dataset"
-"Keyword Magic match, intent and difficulty filters",keywords,should,yes,no,P09/P10; not implemented as source-driven search
+"Keyword Magic match, intent and difficulty filters",keywords,should,yes,partial,Position and difficulty filters are local to tracked keywords; match type and intent/provider research unavailable
 Keyword Strategy Builder and clusters,keywords,should,yes,no,P11; pillar/topic cluster future phase
 Keyword Gap between competitor sites,competitive research,should,yes,no,P12; separate SERP dataset required
 Create tracked keyword with project,tracking,must,yes,yes,P13/P14; PostgreSQL keyword rows; manually supplied attributes
@@ -43,3 +43,8 @@ Semrush proprietary datasets and historical metrics,licensed data,skip,yes,skip,
 Semrush branded UI artwork and trademarks,branding,skip,yes,skip,Original product assets must be independently authored
 Authenticated internal UI and private endpoints,private,skip,unverified,skip,Public references only; no private sessions or APIs
 Existing user network and partner agreements,partners,skip,yes,skip,Not transferable to independently built SearchPilot
+Account registration and login,accounts,must,inferred,yes,"SearchPilot local scrypt accounts, signed revocable HttpOnly cookie sessions; requires PostgreSQL and migration"
+Authenticated workspace isolation,security,must,inferred,yes,Backend project/keyword/audit route scoped by workspace membership; legacy unowned records excluded
+Edit and delete owned projects,workspace,must,inferred,yes,PATCH/DELETE projects with editor/owner checks; destructive deletion should show confirmation
+Account settings and sign out,accounts,should,inferred,partial,Account/session display and logout; profile/password management and invitations planned
+Audit history and issue filtering,audit,should,inferred,partial,Single page audit history and pass/warn filter; no multi-page crawl or comparison

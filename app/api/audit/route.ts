@@ -4,6 +4,7 @@ import { isIP } from "node:net";
 import { databaseAvailable, getPool, normalizeDomain } from "@/lib/db";
 import { demoAudits } from "@/lib/demo";
 import { errorResponse } from "@/lib/response";
+import {authorize,csrf,demoAllowed,deny,forbidden} from '@/lib/auth';
 
 export const runtime = "nodejs";
 
@@ -56,30 +57,39 @@ async function runAudit(domain: string): Promise<{ score: number; checks: Check[
 
 export async function GET(request: NextRequest) {
   const projectId = request.nextUrl.searchParams.get("projectId");
-  if (!databaseAvailable) return NextResponse.json({ audits: demoAudits.filter((a) => !projectId || a.projectId === projectId), demo: true });
+  if (!databaseAvailable) return demoAllowed()?NextResponse.json({ audits: demoAudits.filter((a) => !projectId || a.projectId === projectId), demo: true }):deny();
   try {
+    const session=await authorize(request);if(!session)return deny();
     const { rows } = await getPool().query(
       `SELECT id, project_id AS "projectId", domain, score, checks, checked_at AS "checkedAt"
-       FROM audits WHERE ($1::uuid IS NULL OR project_id = $1::uuid)
-       ORDER BY checked_at DESC LIMIT 40`, [projectId || null],
+       FROM audits WHERE workspace_id=$1 AND ($2::uuid IS NULL OR project_id = $2::uuid)
+       ORDER BY checked_at DESC LIMIT 40`, [session.workspaceId,projectId || null],
     );
     return NextResponse.json({ audits: rows, demo: false });
   } catch (error) { return errorResponse(error); }
 }
 
 export async function POST(request: NextRequest) {
+  const blocked=csrf(request);if(blocked)return blocked;
+  if(!databaseAvailable&&!demoAllowed())return deny();
   try {
     const body = await request.json();
     const domain = normalizeDomain(String(body.domain ?? ""));
+    const projectId=body.projectId?String(body.projectId):null;
+    const session=databaseAvailable?await authorize(request,'editor'):null;
+    if(databaseAvailable&&!session)return forbidden();
+    if(databaseAvailable&&projectId){
+      const match=await getPool().query('SELECT 1 FROM projects WHERE id=$1 AND workspace_id=$2',[projectId,session!.workspaceId]);
+      if(!match.rows.length)return NextResponse.json({error:'Project not found.'},{status:404});
+    }
     const { score, checks } = await runAudit(domain);
     if (!databaseAvailable) {
-      return NextResponse.json({ audit: { id: crypto.randomUUID(), projectId: body.projectId ?? null, domain, score, checkedAt: new Date().toISOString(), checks, demo: false }, persisted: false });
+      return NextResponse.json({ audit: { id: crypto.randomUUID(), projectId, domain, score, checkedAt: new Date().toISOString(), checks, demo: false }, persisted: false });
     }
-    const projectId = body.projectId || null;
     const { rows } = await getPool().query(
-      `INSERT INTO audits (project_id, domain, score, checks) VALUES ($1,$2,$3,$4)
+      `INSERT INTO audits (workspace_id,project_id, domain, score, checks) VALUES ($1,$2,$3,$4,$5)
        RETURNING id, project_id AS "projectId", domain, score, checks, checked_at AS "checkedAt"`,
-      [projectId, domain, score, JSON.stringify(checks)],
+      [session!.workspaceId,projectId, domain, score, JSON.stringify(checks)],
     );
     return NextResponse.json({ audit: rows[0], persisted: true }, { status: 201 });
   } catch (error) { return errorResponse(error); }
