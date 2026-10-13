@@ -45,6 +45,6 @@ Authenticated internal UI and private endpoints,private,skip,unverified,skip,Pub
 Existing user network and partner agreements,partners,skip,yes,skip,Not transferable to independently built SearchPilot
 Account registration and login,accounts,must,inferred,yes,"SearchPilot local scrypt accounts, signed revocable HttpOnly cookie sessions; requires PostgreSQL and migration"
 Authenticated workspace isolation,security,must,inferred,yes,Backend project/keyword/audit route scoped by workspace membership; legacy unowned records excluded
-Edit and delete owned projects,workspace,must,inferred,yes,PATCH/DELETE projects with editor/owner checks; destructive deletion should show confirmation
+Edit and delete owned projects,workspace,must,inferred,partial,"PATCH/DELETE /api/projects are authorized and persistent, and editing exists in the UI, but no project delete action or confirmation is exposed through components/workspace.tsx; end-user delete flow incomplete"
 Account settings and sign out,accounts,should,inferred,partial,Account/session display and logout; profile/password management and invitations planned
 Audit history and issue filtering,audit,should,inferred,yes,"SearchPilot /api/audit persists homepage scan history, and /site-audit has run selector, pass/issue filter and expandable guidance; page-level comparisons remain a separate gap"
