@@ -35,7 +35,10 @@ test('workspace invitation, member roles and selected workspace isolation',{time
     const body=expectStatus(invite,201);
     token=body.invitation.inviteToken;invitationId=body.invitation.id;
     assert.equal(body.delivery,'manual_copy_only');
-    assert.equal((await api('/api/workspaces/invitations',{user:invited,method:'GET'})).status,403);
+    // The second account owns its own default workspace; its member listing is allowed,
+    // but must never expose the first account's pending invitation.
+    const foreignList=expectStatus(await api('/api/workspaces/invitations',{user:invited,method:'GET'}),200);
+    assert.equal(foreignList.invitations.some(x=>x.id===invitationId),false);
   });
   await t.test('invitation token cannot be redeemed by another email or twice',async()=>{
     const outsider=await api('/api/workspaces/invitations/accept',{user:owner,method:'POST',data:{token}});

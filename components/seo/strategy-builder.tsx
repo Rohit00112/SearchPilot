@@ -1,9 +1,9 @@
 'use client';
 
-import {useCallback,useEffect,useState,type FormEvent} from 'react';
+import {useCallback,useEffect,useRef,useState,type FormEvent} from 'react';
 import Link from 'next/link';
 import {Alert,Badge,Button,Card,EmptyState,Input} from '@/components/ui';
-import {ArrowRight,FolderPlus,Layers3,Plus,RefreshCw,Search,Target} from 'lucide-react';
+import {ArrowRight,FolderPlus,Layers3,Plus,RefreshCw,Target} from 'lucide-react';
 
 type Project={id:string;name:string;domain:string};
 type StrategyList={id:string;projectId:string;title:string;description?:string|null;sourceType?:string};
@@ -46,29 +46,37 @@ export default function StrategyBuilder(){
   const [itemCluster,setItemCluster]=useState('');
   const [priority,setPriority]=useState(3);
   const [search,setSearch]=useState('');
+  const projectRequest=useRef(0),listRequest=useRef(0),detailRequest=useRef(0);
 
   const loadProjects=useCallback(async()=>{
+    const request=++projectRequest.current;
     setLoadingProjects(true);setError('');
     try{
       const data=await api<{projects:Project[]}>('/api/projects');
-      setProjects(data.projects??[]);
-      setProjectId(previous=>data.projects?.some(p=>p.id===previous)?previous:(data.projects?.[0]?.id??''));
-    }catch(cause){setError(cause instanceof Error?cause.message:'Unable to load projects.');}
-    finally{setLoadingProjects(false);}
+      if(request===projectRequest.current){
+        setProjects(data.projects??[]);
+        setProjectId(previous=>data.projects?.some(p=>p.id===previous)?previous:(data.projects?.[0]?.id??''));
+      }
+    }catch(cause){if(request===projectRequest.current)setError(cause instanceof Error?cause.message:'Unable to load projects.');}
+    finally{if(request===projectRequest.current)setLoadingProjects(false);}
   },[]);
   const loadLists=useCallback(async()=>{
-    if(!projectId){setLists([]);setListId('');return;}
+    const request=++listRequest.current;
+    if(!projectId){setLists([]);setListId('');setLoadingLists(false);return;}
     setLoadingLists(true);setError('');
     try{
       const data=await api<RowsResponse<StrategyList>>(`/api/seo/strategy?kind=lists&projectId=${encodeURIComponent(projectId)}`);
       const next=data.rows??[];
-      setLists(next);
-      setListId(previous=>next.some(list=>list.id===previous)?previous:(next[0]?.id??''));
-    }catch(cause){setError(cause instanceof Error?cause.message:'Unable to load keyword strategies.');}
-    finally{setLoadingLists(false);}
+      if(request===listRequest.current){
+        setLists(next);
+        setListId(previous=>next.some(list=>list.id===previous)?previous:(next[0]?.id??''));
+      }
+    }catch(cause){if(request===listRequest.current)setError(cause instanceof Error?cause.message:'Unable to load keyword strategies.');}
+    finally{if(request===listRequest.current)setLoadingLists(false);}
   },[projectId]);
   const loadDetail=useCallback(async()=>{
-    if(!listId){setClusters([]);setItems([]);return;}
+    const request=++detailRequest.current;
+    if(!listId){setClusters([]);setItems([]);setLoadingDetail(false);return;}
     setLoadingDetail(true);setError('');
     try{
       const url=`/api/seo/strategy?projectId=${encodeURIComponent(projectId)}&listId=${encodeURIComponent(listId)}`;
@@ -76,10 +84,9 @@ export default function StrategyBuilder(){
         api<RowsResponse<Cluster>>(url+'&kind=clusters'),
         api<RowsResponse<ClusterKeyword>>(url+'&kind=keywords'),
       ]);
-      setClusters(groups.rows??[]);
-      setItems(keywords.rows??[]);
-    }catch(cause){setError(cause instanceof Error?cause.message:'Unable to load strategy details.');}
-    finally{setLoadingDetail(false);}
+      if(request===detailRequest.current){setClusters(groups.rows??[]);setItems(keywords.rows??[]);}
+    }catch(cause){if(request===detailRequest.current)setError(cause instanceof Error?cause.message:'Unable to load strategy details.');}
+    finally{if(request===detailRequest.current)setLoadingDetail(false);}
   },[projectId,listId]);
 
   useEffect(()=>{void loadProjects();},[loadProjects]);
@@ -88,6 +95,7 @@ export default function StrategyBuilder(){
     void loadLists();
   },[loadLists]);
   useEffect(()=>{void loadDetail();},[loadDetail]);
+  useEffect(()=>()=>{projectRequest.current++;listRequest.current++;detailRequest.current++;},[]);
   useEffect(()=>{
     if(!clusters.some(c=>c.id===itemCluster))setItemCluster(clusters[0]?.id??'');
   },[clusters,itemCluster]);
@@ -125,7 +133,9 @@ export default function StrategyBuilder(){
     });
   }
   async function deleteRecord(kind:'lists'|'clusters'|'keywords',id:string,title:string){
-    if(!window.confirm(`Delete ${title}? This action also removes saved child entries where applicable.`))return;
+    if(!window.confirm(kind==='clusters'
+      ? `Delete ${title}? Assigned keywords will remain in the strategy as ungrouped items.`
+      : `Delete ${title}? ${kind==='lists'?'Its groups and keywords will also be deleted.':'This keyword assignment will be removed.'}`))return;
     await mutate(async()=>{
       await api('/api/seo/strategy',json({kind,projectId,id},'DELETE'));
       if(kind==='lists')await loadLists();
@@ -137,6 +147,8 @@ export default function StrategyBuilder(){
   const selected=lists.find(list=>list.id===listId);
   const filtered=clusters.filter(c=>c.title.toLowerCase().includes(search.trim().toLowerCase())||
     items.some(item=>item.clusterId===c.id&&item.phrase.toLowerCase().includes(search.trim().toLowerCase())));
+  const ungrouped=items.filter(item=>!item.clusterId||!clusters.some(cluster=>cluster.id===item.clusterId))
+    .filter(item=>item.phrase.toLowerCase().includes(search.trim().toLowerCase()));
   return <main className="min-h-screen bg-[#f7f8fc] px-4 py-8 text-slate-900 md:px-10">
     <div className="mx-auto max-w-6xl space-y-6">
       <nav aria-label="Breadcrumb" className="text-xs text-slate-700"><Link href="/seo-tools" className="underline">SEO tools</Link> / Keyword strategy</nav>
@@ -177,7 +189,7 @@ export default function StrategyBuilder(){
             </label>
           </div>
           {loadingLists&&<p role="status" className="px-5 pb-5 text-sm">Loading strategy lists…</p>}
-          {!loadingLists&&lists.length===0&&<EmptyState icon={FolderPlus} compact title="No strategy lists yet" description="Create your first strategy list. Nothing will be clustered or generated automatically."/>}
+          {!loadingLists&&!error&&lists.length===0&&<EmptyState icon={FolderPlus} compact title="No strategy lists yet" description="Create your first strategy list. Nothing will be clustered or generated automatically."/>}
         </Card>
 
         {selected&&<div className="grid gap-5 lg:grid-cols-2">
@@ -212,7 +224,7 @@ export default function StrategyBuilder(){
           </div>
           <div className="border-t p-5"><Input label="Search saved groups or assigned keywords" value={search} onChange={event=>setSearch(event.target.value)} placeholder="Filter your topic plan"/></div>
           {loadingDetail&&<p role="status" className="px-5 pb-5 text-sm">Loading saved groups…</p>}
-          {!loadingDetail&&filtered.length===0&&<EmptyState compact icon={Layers3} title={search?'No matching groups':'No topic groups yet'} description={search?'Try another phrase or clear your filter.':'Add a manual pillar or supporting topic to start your content plan.'}/>}
+          {!loadingDetail&&!error&&filtered.length===0&&ungrouped.length===0&&<EmptyState compact icon={Layers3} title={search?'No matching groups or keywords':'No topic groups yet'} description={search?'Try another phrase or clear your filter.':'Add a manual topic group to start your content plan.'}/>}
           {filtered.length>0&&<div className="grid gap-4 border-t p-5 sm:grid-cols-2">{filtered.map(cluster=>{
             const keywords=items.filter(item=>item.clusterId===cluster.id);
             return <section key={cluster.id} className="rounded-xl border border-slate-200 bg-white p-4">
@@ -222,9 +234,10 @@ export default function StrategyBuilder(){
               {keywords.length?<ul className="mt-3 space-y-2">{keywords.map(item=><li key={item.id} className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm"><span className="flex-1 break-words">{item.phrase} · Priority {item.priority}</span><button className="font-bold text-rose-700" type="button" onClick={()=>void deleteRecord('keywords',item.id,item.phrase)}>Remove</button></li>)}</ul>:<p className="mt-3 text-xs text-slate-600">No keywords assigned to this group.</p>}
             </section>;
           })}</div>}
+          {ungrouped.length>0&&<section className="border-t p-5" aria-label="Ungrouped saved keywords"><h3 className="text-sm font-bold">Ungrouped keywords ({ungrouped.length})</h3><p className="mt-1 text-xs text-slate-600">Deleting a group keeps its keyword records, and they can be reviewed here.</p><ul className="mt-3 space-y-2">{ungrouped.map(item=><li key={item.id} className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm"><span className="min-w-0 flex-1 break-words">{item.phrase} · Priority {item.priority}</span><button type="button" className="font-semibold text-rose-700" onClick={()=>void deleteRecord('keywords',item.id,item.phrase)}>Remove</button></li>)}</ul></section>}
         </Card>}
       </div>}
-      <p className="text-xs leading-6 text-slate-600">Source: your workspace's saved manual entries. Cluster groups and pillar assignments are editorial decisions and are not algorithmic SEO or commercial dataset recommendations.</p>
+      <p className="text-xs leading-6 text-slate-600">Source: your workspace's saved manual entries. Topic groups and keyword priorities are editorial decisions, not algorithmic SEO or commercial dataset recommendations. Each view displays up to 100 saved records.</p>
     </div>
   </main>;
 }

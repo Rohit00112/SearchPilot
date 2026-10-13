@@ -31,12 +31,16 @@ export default function Research({mode}:{mode:ResearchMode}){
   setProjectId(p=>projectsData.projects?.some(item=>item.id===p)?p:(projectsData.projects?.[0]?.id||''));
  }catch(e){setError(message(e));}finally{setLoading(false)}},[]);
  useEffect(()=>{void refresh()},[refresh]);
- useEffect(()=>{if(!projectId){setKeywords([]);setRanks([]);return;}let cancelled=false;setLoading(true);setError('');
-  Promise.all([loadJSON<{keywords:Keyword[]}>(`/api/keywords?projectId=${encodeURIComponent(projectId)}`),loadJSON<{rankings:Rank[]}>(`/api/rankings?projectId=${encodeURIComponent(projectId)}&limit=100`).catch(()=>({rankings:[] as Rank[]}))])
+ useEffect(()=>{if(!projectId){setKeywords([]);setRanks([]);return;}let cancelled=false;setLoading(true);setError('');setKeywords([]);setRanks([]);
+  const needsKeywords=mode==='rank-history'||mode==='keyword-research';
+  Promise.all([
+    needsKeywords?loadJSON<{keywords:Keyword[]}>(`/api/keywords?projectId=${encodeURIComponent(projectId)}`):Promise.resolve({keywords:[] as Keyword[]}),
+    mode==='rank-history'?loadJSON<{rankings:Rank[]}>(`/api/rankings?projectId=${encodeURIComponent(projectId)}&limit=100`):Promise.resolve({rankings:[] as Rank[]}),
+  ])
    .then(([k,r])=>{if(!cancelled){setKeywords(k.keywords||[]);setRanks(r.rankings||[]);}})
    .catch(e=>{if(!cancelled)setError(message(e))}).finally(()=>{if(!cancelled)setLoading(false)});
   return()=>{cancelled=true};
- },[projectId]);
+ },[projectId,mode]);
  async function addRank(event:React.FormEvent<HTMLFormElement>){event.preventDefault();if(!projectId||!keywordId)return;
   const value=Number(position);if(!Number.isInteger(value)||value<1||value>1000){setError('Position must be a whole number between 1 and 1000.');return;}
   setSaving(true);setError('');try{await loadJSON('/api/rankings',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({projectId,keywordId,position:value,note:note.trim()||undefined})});
@@ -82,7 +86,7 @@ export default function Research({mode}:{mode:ResearchMode}){
        <tbody>{mode==='rank-history'?ranks.map(row=><tr key={row.id} className="border-t"><th scope="row" className="p-4 font-medium">{row.keyword}</th><td className="p-4">{row.position}</td><td className="p-4">{new Date(row.observedAt).toLocaleString()}</td><td className="p-4"><Badge tone="info">Manual · unverified</Badge></td><td className="p-4">{row.note||'—'}</td></tr>):filtered.map(row=><tr key={row.id} className="border-t"><th scope="row" className="p-4 font-medium">{row.keyword}</th><td className="p-4">{row.position??'—'}</td><td className="p-4">{row.volume??'—'}</td><td className="p-4">{row.difficulty??'—'}</td><td className="p-4"><Badge>Manually entered</Badge></td></tr>)}</tbody>
        </table>
       </div>
-      {(mode==='rank-history'?ranks:filtered).length===0&&<EmptyState icon={Target} compact title="Nothing to display yet" description={mode==='rank-history'?'Add a tracked keyword and record an observation to begin your history.':'Add keywords to your selected project, or clear the search filter.'} action={<Link className="font-semibold text-violet-700 underline" href="/keywords">Manage tracked keywords</Link>}/>}
+      {!error&&(mode==='rank-history'?ranks:filtered).length===0&&<EmptyState icon={Target} compact title="Nothing to display yet" description={mode==='rank-history'?'Add a tracked keyword and record an observation to begin your history.':'Add keywords to your selected project, or clear the search filter.'} action={<Link className="font-semibold text-violet-700 underline" href="/keywords">Manage tracked keywords</Link>}/>}
      </Card>}
     </div>}
   </div></main>;
