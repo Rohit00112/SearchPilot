@@ -1,12 +1,14 @@
 import {NextRequest,NextResponse} from 'next/server';
 import {getPool} from '@/lib/db';
 import {csrf,hashPassword,startSession,memberships,ensureAuthReady} from '@/lib/auth';
+import {limitResponse,limitedJson,remoteClient,RequestBodyError} from '@/lib/rate-limit';
 export const runtime='nodejs';
 export async function POST(request:NextRequest){
   const blocked=csrf(request);if(blocked)return blocked;
+  try{const limited=await limitResponse({kind:'auth-register',identity:remoteClient(request),limit:5,windowSeconds:3600});if(limited)return limited}catch{return NextResponse.json({error:'Registration temporarily unavailable.'},{status:503})}
   try{
     ensureAuthReady();
-    const body=await request.json();
+    const body=await limitedJson(request);
     const email=String(body.email||'').trim().toLowerCase();
     const password=String(body.password||'');
     const displayName=String(body.displayName||'').trim();
@@ -29,6 +31,7 @@ export async function POST(request:NextRequest){
     await startSession(user.id,response);
     return response;
   }catch(error){
+    if(error instanceof RequestBodyError)return NextResponse.json({error:error.message},{status:error.status});
     const code=(error as {code?:string}).code;
     return NextResponse.json({error:code==='23505'?'Account already exists.':'Unable to create account.'},{status:code==='23505'?409:503});
   }

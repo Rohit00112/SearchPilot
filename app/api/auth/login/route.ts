@@ -1,12 +1,14 @@
 import {NextRequest,NextResponse} from 'next/server';
 import {getPool} from '@/lib/db';
 import {csrf,verifyPassword,startSession,memberships,ensureAuthReady} from '@/lib/auth';
+import {limitResponse,limitedJson,remoteClient,requestError} from '@/lib/rate-limit';
 export const runtime='nodejs';
 export async function POST(request:NextRequest){
   const blocked=csrf(request);if(blocked)return blocked;
+  try{const limited=await limitResponse({kind:'auth-login',identity:remoteClient(request),limit:10,windowSeconds:900});if(limited)return limited}catch{return NextResponse.json({error:'Authentication temporarily unavailable.'},{status:503})}
   try{
     ensureAuthReady();
-    const body=await request.json();
+    const body=await limitedJson(request);
     const email=String(body.email||'').trim().toLowerCase();
     const password=String(body.password||'');
     if(email.length>254||password.length>256)return NextResponse.json({error:'Invalid email or password.'},{status:401});
@@ -19,5 +21,5 @@ export async function POST(request:NextRequest){
     const response=NextResponse.json({user:{id:user.id,email:user.email,displayName:user.displayName},workspaces,activeWorkspaceId:workspaces[0]?.id??null});
     await startSession(user.id,response);
     return response;
-  }catch{return NextResponse.json({error:'Login temporarily unavailable.'},{status:503})}
+  }catch(error){return requestError(error,'Login temporarily unavailable.')}
 }

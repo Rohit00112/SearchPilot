@@ -22,6 +22,9 @@ docker compose exec -T postgres psql -U searchpilot -d searchpilot < db/schema.s
 
 # Then apply the additive local-auth migration to the SAME existing database:
 docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U searchpilot -d searchpilot < db/migrations/001_local_auth_workspaces.sql
+docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U searchpilot -d searchpilot < db/migrations/002_rank_reports.sql
+docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U searchpilot -d searchpilot < db/migrations/003_security_limits.sql
+docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U searchpilot -d searchpilot < db/migrations/004_gsc.sql
 ```
 
 Configure `AUTH_SECRET` as an unpredictable 32+ character string (for example generate one with `openssl rand -hex 32`). Set `APP_ORIGIN=http://localhost:3000` for local same-origin mutation protection; set the exact public HTTPS origin behind a production proxy. Do not commit secrets. Authentication routes are `POST /api/auth/register` (`{email,password,displayName}`), `POST /api/auth/login` (`{email,password}`), `POST /api/auth/logout` (empty JSON body), and `GET /api/auth/me`. Passwords require 12–256 characters. Sessions use signed HttpOnly SameSite=Lax cookies backed by revocable database session records. Browser mutation requests must supply a same-origin `Origin` header. Responses from registration/login/me contain `{user,workspaces,activeWorkspaceId}`; `me` also returns `authenticated:true`. Provide optional `x-workspace-id` on project/keyword/audit requests to choose among authorized workspaces, otherwise the oldest membership is used. Viewers can read, while owners/editors can modify. Unknown legacy projects retain `workspace_id=NULL` and are invisible; the migration never claims them for a newly registered user.
@@ -40,6 +43,12 @@ npm run start
 ## Data accuracy
 
 Domain visibility, traffic, backlinks, estimated keyword difficulty and trend figures in the demonstration are illustrative. They are **not live search engine analytics**. Keyword values can be entered manually and stored in PostgreSQL. Site Audit performs a real, **single-page** public HTML check on request (title, description, headings, canonical, viewport and HTTPS response). It is not a full crawl or a Google rankings report.
+
+Additional authenticated endpoints: `GET/POST /api/rankings` for explicitly manual, unverified observations; `GET /api/reports?projectId=<uuid>&kind=keywords|rankings` for workspace-scoped CSV exports. Reports enforce row caps and escape spreadsheet formula injection. The live audit now rejects redirects, limits responses to 256 KiB/8 seconds, uses a DNS-pinned HTTPS request to a public IPv4 address, and rate limits scan requests. Production deployments also need egress firewall restrictions, crawl quotas and monitoring.
+
+### Google Search Console
+
+Google Search Console integration uses official OAuth and the read-only `webmasters.readonly` scope. Create an OAuth client in your own Google Cloud project, enable the Search Console API and register `<APP_ORIGIN>/api/integrations/gsc/callback` as its redirect URI. Configure `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `APP_ORIGIN`, and `GSC_ENCRYPTION_KEY` (64 hex digits generated securely) in your private environment. `POST /api/integrations/gsc/connect` returns the Google consent URL; `GET /api/integrations/gsc/properties` lists permitted properties and `PATCH /api/integrations/gsc` selects one. `POST /api/integrations/gsc/performance` imports a bounded 31-day set and `GET /api/integrations/gsc/performance?from=YYYY-MM-DD&to=YYYY-MM-DD` reads stored metrics. An import currently requests up to 1,000 records and explicitly flags possible truncation; full pagination, scheduled refreshes and live OAuth verification remain future work. GSC's average position is **not** a direct per-keyword SERP rank.
 
 ## Project references
 

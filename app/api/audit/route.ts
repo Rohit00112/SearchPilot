@@ -1,50 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { lookup } from "node:dns/promises";
-import { isIP } from "node:net";
 import { databaseAvailable, getPool, normalizeDomain } from "@/lib/db";
 import { demoAudits } from "@/lib/demo";
 import { errorResponse } from "@/lib/response";
 import {authorize,csrf,demoAllowed,deny,forbidden} from '@/lib/auth';
+import {AuditFetchError,fetchAuditHtml} from '@/lib/audit-fetch';
+import {limitResponse,limitedJson,remoteClient,requestError,RequestBodyError} from '@/lib/rate-limit';
 
 export const runtime = "nodejs";
 
 type Check = { name: string; status: "pass" | "warning" | "fail"; details: string; recommendation: string };
 
-function isPublicIP(address: string): boolean {
-  if (isIP(address) === 4) {
-    const n = address.split(".").map(Number);
-    return !(n[0] === 0 || n[0] === 10 || n[0] === 127 || n[0] >= 224 ||
-      (n[0] === 169 && n[1] === 254) || (n[0] === 172 && n[1] >= 16 && n[1] <= 31) ||
-      (n[0] === 192 && n[1] === 168) || (n[0] === 100 && n[1] >= 64 && n[1] <= 127) ||
-      (n[0] === 192 && n[1] === 0) || (n[0] === 198 && (n[1] === 18 || n[1] === 19)));
-  }
-  if (isIP(address) === 6) {
-    const value = address.toLowerCase();
-    return !(value === "::1" || value === "::" || value.startsWith("fc") || value.startsWith("fd") ||
-      value.startsWith("fe8") || value.startsWith("fe9") || value.startsWith("fea") || value.startsWith("feb") ||
-      value.startsWith("::ffff:") || value.startsWith("2001:db8"));
-  }
-  return false;
-}
-
 async function runAudit(domain: string): Promise<{ score: number; checks: Check[] }> {
-  const records = await lookup(domain, { all: true });
-  if (!records.length || records.some((record) => !isPublicIP(record.address))) {
-    throw new Error("Domain must resolve to a public IP address.");
-  }
-  const response = await fetch(`https://${domain}/`, {
-    redirect: "manual", signal: AbortSignal.timeout(8000),
-    headers: { "user-agent": "SearchPilotSiteAudit/1.0 (+on-demand single-page check)" },
-    cache: "no-store",
-  });
-  const contentType = response.headers.get("content-type") ?? "";
-  const html = contentType.includes("text/html") ? (await response.text()).slice(0, 300_000) : "";
+  const { html, status } = await fetchAuditHtml(domain);
   const title = /<title\b[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1]?.trim();
   const description = /<meta\s+[^>]*name=["']description["'][^>]*content=["']([^"']*)/i.exec(html)?.[1] ??
     /<meta\s+[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i.exec(html)?.[1];
   const h1Count = (html.match(/<h1\b/gi) ?? []).length;
   const checks: Check[] = [
-    { name: "HTTPS response", status: response.ok ? "pass" : "warning", details: `HTTP ${response.status}`, recommendation: "Ensure the homepage returns a successful HTTPS response." },
+    { name: "HTTPS response", status: status >= 200 && status < 300 ? "pass" : "warning", details: `HTTP ${status}`, recommendation: "Ensure the homepage returns a successful HTTPS response." },
     { name: "Page title", status: title ? "pass" : "fail", details: title ? title.slice(0, 110) : "Missing or inaccessible title.", recommendation: "Write a unique, descriptive title of appropriate length." },
     { name: "Meta description", status: description ? "pass" : "warning", details: description ? description.slice(0, 160) : "Missing meta description.", recommendation: "Add a clear summary that describes the page." },
     { name: "Heading structure", status: h1Count === 1 ? "pass" : "warning", details: `${h1Count} H1 heading(s) detected.`, recommendation: "Use one descriptive main heading." },
@@ -73,11 +46,18 @@ export async function POST(request: NextRequest) {
   const blocked=csrf(request);if(blocked)return blocked;
   if(!databaseAvailable&&!demoAllowed())return deny();
   try {
-    const body = await request.json();
+    const body = await limitedJson(request);
     const domain = normalizeDomain(String(body.domain ?? ""));
     const projectId=body.projectId?String(body.projectId):null;
     const session=databaseAvailable?await authorize(request,'editor'):null;
     if(databaseAvailable&&!session)return forbidden();
+    const throttled=await limitResponse({
+      kind:'audit',
+      identity:session?.id??remoteClient(request),
+      limit:6,
+      windowSeconds:3600,
+    });
+    if(throttled)return throttled;
     if(databaseAvailable&&projectId){
       const match=await getPool().query('SELECT 1 FROM projects WHERE id=$1 AND workspace_id=$2',[projectId,session!.workspaceId]);
       if(!match.rows.length)return NextResponse.json({error:'Project not found.'},{status:404});
@@ -92,5 +72,9 @@ export async function POST(request: NextRequest) {
       [session!.workspaceId,projectId, domain, score, JSON.stringify(checks)],
     );
     return NextResponse.json({ audit: rows[0], persisted: true }, { status: 201 });
-  } catch (error) { return errorResponse(error); }
+  } catch (error) {
+    if(error instanceof AuditFetchError)return NextResponse.json({error:error.message},{status:422});
+    if(error instanceof RequestBodyError)return requestError(error,'Invalid audit request.');
+    return errorResponse(error,503);
+  }
 }

@@ -16,11 +16,11 @@ Create tracked keyword with project,tracking,must,yes,yes,P13/P14; PostgreSQL ke
 Remove tracked keyword,tracking,must,yes,yes,"P13/P14; local API delete, separate from Semrush behavior"
 Tracking campaign target engine device locale,tracking,must,yes,no,P13; existing project no engine/device/locale campaign config
 Position Tracking rank snapshot dashboard,tracking,must,yes,partial,"P14; local manually populated ranking, trend illustrative"
-Position Tracking timeseries and rank changes,tracking,must,yes,no,P14; no collected historical positions
+Position Tracking timeseries and rank changes,tracking,must,yes,partial,Manual timestamped rank observations with project/keyword membership and pagination; no automated SERP provider
 Position Tracking competitor discovery,tracking,could,yes,no,P14; requires observed SERP datasets
 Position Tracking Landscape overview,tracking,should,yes,no,P15; no dedicated page
 Position Tracking keyword tags and notes,tracking,should,yes,no,P14; no persistent annotation model
-Site Audit configuration and schedule,audit,must,yes,partial,"P16; user can input domain, no crawl config/scheduler"
+Site Audit configuration and schedule,audit,must,yes,partial,Manual single-homepage domain input with bounded HTTPS fetch; multi-page scheduled crawl absent
 On-demand homepage HTML checks,audit,must,yes,yes,P17; SearchPilot performs original 1-page checks
 Site Audit issue severity and explanations,audit,must,yes,partial,P18; recommendation text exists; no full issue taxonomy
 Site Audit crawled pages and comparisons,audit,should,yes,no,P17/P19; no multi-page crawl/history comparison
@@ -31,8 +31,8 @@ Backlinks and referring domains table,backlinks,must,yes,partial,P21; illustrati
 Backlink Audit review workflow,backlinks,should,yes,no,P22/P23; toxicity is never automatically authoritative
 Backlink Gap competitor comparison,backlinks,could,yes,no,P24; licensed or independent link data required
 Reports gallery and templated editor,reports,should,yes,partial,P25; simplified report screen only
-Report export and scheduling,reports,should,yes,partial,P25; keyword CSV export; PDF/scheduling unavailable
-Google Search Console and Analytics integrations,integrations,should,yes,no,P03; requires user OAuth permission
+Report export and scheduling,reports,should,yes,partial,Tenant-scoped CSV export keywords/manual rank history; PDF/scheduling absent
+Google Search Console and Analytics integrations,integrations,should,yes,partial,Official GSC OAuth/property import API implemented; requires user-owned Google client credentials; Google Analytics not integrated
 Responsiveness and accessibility states,ui,must,inferred,partial,SearchPilot design requirement; inferred exact Semrush mobile states
 Performance under plan quotas,plans,could,yes,no,P10/P13; product-specific quota design
 AI Visibility toolkit,expansion,could,yes,no,P01/P27; separate product area
