@@ -1,5 +1,5 @@
 'use client';
-import {useCallback,useEffect,useState} from 'react';
+import {useCallback,useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
 import {FileText,ArrowUp,ArrowDown,Download,Plus,Trash2,Save} from 'lucide-react';
 import {reportPresets,reportSections,reportSectionLabels,type ReportSection} from './report-templates';
@@ -36,6 +36,9 @@ export default function ReportBuilder(){
   const [title,setTitle]=useState(reportPresets[0].title),[blocks,setBlocks]=useState<ReportSection[]>([...reportPresets[0].blocks]),[selected,setSelected]=useState('');
   const [notes,setNotes]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[success,setSuccess]=useState('');
   const [shares,setShares]=useState<Share[]>([]),[shareTtl,setShareTtl]=useState(7),[shareConsent,setShareConsent]=useState(false),[shareUrl,setShareUrl]=useState('');
+  const [sharesLoading,setSharesLoading]=useState(false),[shareError,setShareError]=useState('');
+  const selectionRef=useRef({projectId:'',reportId:''});
+  const shareRequestRef=useRef(0);
   const [initialized,setInitialized]=useState(false);
   const project=projects.find(p=>p.id===projectId);
   // Render only data that matches the selected project, including before the next effect runs.
@@ -44,6 +47,12 @@ export default function ReportBuilder(){
   const reports=data?.reports??[],keywords=data?.keywords??[],audits=data?.audits??[];
   const rankCount=data?.rankCount??null;
   const errors=data?.errors??{};
+  function resetShareView(project:string,report:string){
+    selectionRef.current={projectId:project,reportId:report};
+    shareRequestRef.current++;
+    setShares([]);setSharesLoading(Boolean(report));setShareError('');
+    setShareUrl('');setShareConsent(false);
+  }
   const refreshReports=useCallback(async(id:string)=>{
     const result=await api<{reports:Report[]}>(`/api/report-definitions?projectId=${encodeURIComponent(id)}`);
     setProjectData(current=>current?.projectId===id
@@ -85,7 +94,7 @@ export default function ReportBuilder(){
   },[projectId]);
   function applyPreset(preset:typeof reportPresets[number]){
     setSelected('');
-    setShares([]);setShareUrl('');setShareConsent(false);
+    resetShareView(projectId,'');
     setTitle(preset.title);
     setBlocks([...preset.blocks]);
     setSuccess(`${preset.name} preset applied. Edit the layout before saving or printing.`);
@@ -94,43 +103,62 @@ export default function ReportBuilder(){
   function chooseProject(nextId:string){
     setProjectId(nextId);
     setSelected('');
-    setShares([]);setShareUrl('');setShareConsent(false);
+    resetShareView(nextId,'');
     setNotes('');
     setTitle(reportPresets[0].title);
     setBlocks([...reportPresets[0].blocks]);
     setError('');
     setSuccess('');
   }
-  function loadReport(report:Report){setSelected(report.id);setTitle(report.title);setBlocks(report.blocks);setShares([]);setShareUrl('');setShareConsent(false);setSuccess('Loaded saved report layout.');}
-  const listShares=useCallback(async(reportId:string)=>{
-    const result=await api<{shares:Share[]}>(`/api/report-shares?reportId=${encodeURIComponent(reportId)}`);
-    setShares(result.shares);
+  function loadReport(report:Report){
+    resetShareView(projectId,report.id);
+    setSelected(report.id);setTitle(report.title);setBlocks(report.blocks);
+    setSuccess('Loaded saved report layout.');setError('');
+  }
+  const listShares=useCallback(async(reportId:string,forProject:string)=>{
+    const request=++shareRequestRef.current;
+    setSharesLoading(true);setShareError('');
+    try{
+      const result=await api<{shares:Share[]}>(`/api/report-shares?reportId=${encodeURIComponent(reportId)}`);
+      if(request===shareRequestRef.current&&selectionRef.current.reportId===reportId&&selectionRef.current.projectId===forProject){
+        setShares(result.shares);setShareError('');
+      }
+    }catch(e){
+      if(request===shareRequestRef.current&&selectionRef.current.reportId===reportId&&selectionRef.current.projectId===forProject){
+        setShares([]);setShareError(getError(e));
+      }
+    }finally{
+      if(request===shareRequestRef.current&&selectionRef.current.reportId===reportId&&selectionRef.current.projectId===forProject)setSharesLoading(false);
+    }
   },[]);
   useEffect(()=>{
-    if(!selected){setShares([]);return;}
-    let active=true;
-    void api<{shares:Share[]}>(`/api/report-shares?reportId=${encodeURIComponent(selected)}`)
-      .then(result=>{if(active)setShares(result.shares);})
-      .catch(e=>{if(active)setError(getError(e));});
-    return()=>{active=false;};
-  },[selected]);
+    if(!selected)return;
+    if(selectionRef.current.reportId!==selected||selectionRef.current.projectId!==projectId)
+      resetShareView(projectId,selected);
+    void listShares(selected,projectId);
+    return()=>{shareRequestRef.current++;};
+  },[selected,projectId,listShares]);
   async function createShare(){
     if(!selected||!shareConsent)return;
+    const reportId=selected,forProject=projectId;
     setBusy(true);setError('');setSuccess('');setShareUrl('');
     try{
-      const result=await api<{token:string}>('/api/report-shares',config('POST',{reportId:selected,ttlDays:shareTtl,acknowledgeLimitedShare:true}));
+      const result=await api<{token:string}>('/api/report-shares',config('POST',{reportId,ttlDays:shareTtl,acknowledgeLimitedShare:true}));
+      if(selectionRef.current.reportId!==reportId||selectionRef.current.projectId!==forProject)return;
       setShareUrl(`${window.location.origin}/shared-report/${result.token}`);
-      await listShares(selected);
+      void listShares(reportId,forProject);
       setShareConsent(false);
       setSuccess('Limited read-only link created. Copy it now; the token cannot be retrieved later.');
     }catch(e){setError(getError(e));}finally{setBusy(false);}
   }
   async function revokeShare(id:string){
     if(!selected)return;
+    const reportId=selected,forProject=projectId;
     setBusy(true);setError('');setSuccess('');
     try{
       await api(`/api/report-shares?id=${encodeURIComponent(id)}`,{method:'DELETE'});
-      setShareUrl('');await listShares(selected);setSuccess('Share link revoked.');
+      if(selectionRef.current.reportId!==reportId||selectionRef.current.projectId!==forProject)return;
+      setShareUrl('');void listShares(reportId,forProject);setSuccess('Share link revoked.');
     }catch(e){setError(getError(e));}finally{setBusy(false);}
   }
   function move(index:number,delta:number){setBlocks(current=>{const next=[...current],target=index+delta;if(target<0||target>=next.length)return current;[next[index],next[target]]=[next[target],next[index]];return next;});}
@@ -141,14 +169,17 @@ export default function ReportBuilder(){
       const response=selected?
         await api<{report:Report}>(`/api/report-definitions?id=${encodeURIComponent(selected)}`,config('PATCH',{title,blocks})):
         await api<{report:Report}>('/api/report-definitions',config('POST',{projectId,title,blocks}));
-      setSelected(response.report.id);await refreshReports(projectId);setSuccess('Report layout saved to your workspace.');
+      resetShareView(projectId,response.report.id);setSelected(response.report.id);
+      setSuccess('Report layout saved to your workspace.');
+      try{await refreshReports(projectId);}catch{setError('Report saved, but the saved-layout list could not refresh. Reload to see the latest list.');}
     }catch(e){setError(getError(e))}finally{setBusy(false)}
   }
   async function remove(){
     if(!selected||!window.confirm('Delete this saved report layout?'))return;
-    setBusy(true);try{
+    setBusy(true);setError('');setSuccess('');try{
       await api(`/api/report-definitions?id=${encodeURIComponent(selected)}`,{method:'DELETE'});
-      setSelected('');setTitle(reportPresets[0].title);setBlocks([...reportPresets[0].blocks]);await refreshReports(projectId);setSuccess('Report layout deleted.');
+      resetShareView(projectId,'');setSelected('');setTitle(reportPresets[0].title);setBlocks([...reportPresets[0].blocks]);setSuccess('Report layout deleted.');
+      try{await refreshReports(projectId);}catch{setError('Report deleted, but the saved-layout list could not refresh.');}
     }catch(e){setError(getError(e))}finally{setBusy(false)}
   }
   function print(){window.print();}
@@ -182,7 +213,7 @@ export default function ReportBuilder(){
         <div className="space-y-4">
           <label className="block text-sm font-semibold">Project<select className="mt-2 block w-full rounded-md border border-slate-300 p-2" value={projectId} disabled={busy} onChange={e=>chooseProject(e.target.value)}><option value="">Choose a project</option>{projects.map(p=><option key={p.id} value={p.id}>{p.name} — {p.domain}</option>)}</select></label>
           <label className="block text-sm font-semibold">Report title<input maxLength={160} className="mt-2 block w-full rounded-md border border-slate-300 p-2" value={title} onChange={e=>setTitle(e.target.value)}/></label>
-          <label className="block text-sm font-semibold">Saved layouts for this project<select className="mt-2 block w-full rounded-md border border-slate-300 p-2" value={selected} disabled={busy||loading||Boolean(errors.reports)} onChange={e=>{const next=reports.find(r=>r.id===e.target.value);if(next)loadReport(next);else setSelected('')}}><option value="">New report</option>{reports.map(r=><option key={r.id} value={r.id}>{r.title}</option>)}</select></label>
+          <label className="block text-sm font-semibold">Saved layouts for this project<select className="mt-2 block w-full rounded-md border border-slate-300 p-2" value={selected} disabled={busy||loading||Boolean(errors.reports)} onChange={e=>{const next=reports.find(r=>r.id===e.target.value);if(next)loadReport(next);else{resetShareView(projectId,'');setSelected('');setSuccess('');}}}><option value="">New report</option>{reports.map(r=><option key={r.id} value={r.id}>{r.title}</option>)}</select></label>
           <label className="block text-sm font-semibold">Report author notes (local preview only)<textarea className="mt-2 min-h-20 w-full rounded-md border border-slate-300 p-2" maxLength={2000} value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Context and next steps to discuss with your client"/></label>
         </div>
         <div>
@@ -191,7 +222,7 @@ export default function ReportBuilder(){
           <div className="mt-4 flex flex-wrap gap-2">
             <button className="flex items-center gap-2 rounded bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50" disabled={busy||!projectId||!blocks.length||!title.trim()} onClick={()=>void save()}><Save size={15}/> {selected?'Update layout':'Save layout'}</button>
             <button className="flex items-center gap-2 rounded border px-4 py-2 text-sm disabled:opacity-50" disabled={!projectId||loading||!blocks.length} onClick={print}><Download size={15}/> Print / Save PDF</button>
-            <button className="flex items-center gap-2 rounded border px-4 py-2 text-sm" disabled={busy} onClick={()=>{setSelected('');setTitle(reportPresets[0].title);setBlocks([...reportPresets[0].blocks]);setSuccess('New editable report layout started.')}}><Plus size={15}/> New</button>
+            <button className="flex items-center gap-2 rounded border px-4 py-2 text-sm" disabled={busy} onClick={()=>{resetShareView(projectId,'');setSelected('');setTitle(reportPresets[0].title);setBlocks([...reportPresets[0].blocks]);setError('');setSuccess('New editable report layout started.')}}><Plus size={15}/> New</button>
             {selected&&<button className="flex items-center gap-2 rounded border border-red-400 px-4 py-2 text-sm text-red-700" disabled={busy} onClick={()=>void remove()}><Trash2 size={15}/> Delete</button>}
           </div>
         </div>
@@ -209,7 +240,8 @@ export default function ReportBuilder(){
           <button type="button" className="rounded bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50" disabled={busy||!shareConsent} onClick={()=>void createShare()}>Create expiring share link</button>
           {shareUrl&&<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm"><p className="mb-2 font-semibold">Copy this link now. It will not be shown again.</p><input aria-label="New share URL" readOnly className="w-full rounded border p-2" value={shareUrl} onFocus={e=>e.target.select()}/><button type="button" className="mt-2 rounded border bg-white px-3 py-1.5" onClick={()=>void navigator.clipboard.writeText(shareUrl)}>Copy link</button></div>}
           <h3 className="text-sm font-semibold">Previous links</h3>
-          {shares.length===0?<p className="text-sm text-slate-500">No share links for this saved layout.</p>:<ul className="space-y-2">{shares.map(share=><li key={share.id} className="flex flex-wrap items-center justify-between gap-2 rounded border p-3 text-sm"><span>Expires {new Date(share.expiresAt).toLocaleString()} · {share.revokedAt?'Revoked':new Date(share.expiresAt).getTime()<=Date.now()?'Expired':'Active'}</span>{!share.revokedAt&&new Date(share.expiresAt).getTime()>Date.now()&&<button type="button" disabled={busy} className="rounded border border-red-300 px-3 py-1 text-red-700 disabled:opacity-50" onClick={()=>void revokeShare(share.id)}>Revoke</button>}</li>)}</ul>}
+          {shareError&&<p role="alert" className="text-sm text-red-700">Unable to load share links: {shareError}</p>}
+          {sharesLoading?<p role="status" className="text-sm text-slate-500">Loading links for this report…</p>:!shareError&&shares.length===0?<p className="text-sm text-slate-500">No share links for this saved layout.</p>:<ul className="space-y-2">{shares.map(share=><li key={share.id} className="flex flex-wrap items-center justify-between gap-2 rounded border p-3 text-sm"><span>Expires {new Date(share.expiresAt).toLocaleString()} · {share.revokedAt?'Revoked':new Date(share.expiresAt).getTime()<=Date.now()?'Expired':'Active'}</span>{!share.revokedAt&&new Date(share.expiresAt).getTime()>Date.now()&&<button type="button" disabled={busy||sharesLoading} className="rounded border border-red-300 px-3 py-1 text-red-700 disabled:opacity-50" onClick={()=>void revokeShare(share.id)}>Revoke</button>}</li>)}</ul>}
         </>}
       </section>
     </div>

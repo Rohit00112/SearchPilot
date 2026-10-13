@@ -27,3 +27,15 @@ This wave builds independently owned functionality; it is not a licensed externa
 - Original-vendor brand sweep and token contrast checker passed (full component browser review remains a separate task).
 
 SearchPilot remains not production ready or at full original-platform feature parity.
+
+## Follow-up: first-party opportunity export
+
+- The Search opportunities screen can export its currently loaded, sorted **saved GSC query aggregates** as a UTF-8 CSV. Each row carries the source, selected date range, property scope, last saved observation date, and heuristic label.
+- The export covers only the currently loaded API page (maximum 100 queries), **not** an exhaustive Search Console export if more results exist. The UI already warns when additional results may be available.
+- Spreadsheet-formula-looking query text is prefixed with an apostrophe and all cells are quoted to reduce spreadsheet injection risk. No external request or provider-derived keyword volume/difficulty is introduced.
+
+## Follow-up: report and manual-ranking state reliability
+
+- Report builder now ignores outdated share-list responses when a different report or project is selected. Share creation, revocation, and save/delete operations distinguish successful mutations from a subsequent listing-refresh failure; consent and one-time token views reset on selection changes.
+- Manual ranking history now receives the full active project's keywords independently of portfolio search filters. In-flight requests from previous projects are ignored, overlapping pagination rows are deduplicated, and manual/observed provenance remains explicit.
+- Added browser regressions for report lifecycle, project-switch/race behavior, ranking pagination, and first-party CSV export. Test scenarios requiring seeded disposable QA credentials are not claimed as executed unless separately recorded. Worker-verified isolated manual-ranking desktop browser tests: 2/2 passed.
