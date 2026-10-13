@@ -3,7 +3,7 @@ import {Badge,Card} from '@/components/ui';
 import {Search,BarChart3,Link2,Target,ShieldCheck,ArrowRight,Network,Scale,GitCompare,ScanSearch} from 'lucide-react';
 const tools=[
  {href:'/keyword-magic',name:'Keyword research',description:'Review tracked terms and, when available, user-imported keyword research.',icon:Search},
- {href:'/keyword-strategy',name:'Keyword strategy builder',description:'Create manual topic clusters and assign pillar and supporting keywords to a content plan.',icon:Network},
+ {href:'/keyword-strategy',name:'Keyword strategy builder',description:'Create editorial topic groups and assign manually entered keywords and priorities.',icon:Network},
  {href:'/organic-rankings',name:'Organic rankings',description:'View available first-party and user-imported observations with source labels.',icon:BarChart3},
  {href:'/seo-backlinks',name:'Backlink research',description:'Explore authorized backlink observations. No fabricated link graph.',icon:Link2},
  {href:'/backlink-audit',name:'Backlink review',description:'Triage imported links with human decisions, notes and a transparent review history.',icon:Scale},

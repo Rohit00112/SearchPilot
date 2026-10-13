@@ -1,7 +1,7 @@
 feature,area,priority,original,clone,notes
 "Folder list, search and selection",workspace,must,yes,partial,P02; searchable projects and persistent active selection; folder tags/pins absent
 Create and rename site workspaces,workspace,must,yes,partial,P02; project create and rename/update/delete available; full folder tags/sharing not implemented
-Folder sharing and access roles,workspace,should,yes,partial,"P02; backend owner/editor/viewer permissions and tenant checks exist, but no sharing/invite/member management UI or collaborator onboarding"
+Folder sharing and access roles,workspace,should,yes,partial,"Owner/editor/viewer permissions, one-time invited email verification and member-management UI now present; email sending and report link sharing not connected."
 SEO overview dashboard,overview,must,yes,partial,"P03; synthetic sample metrics, no connected analytics"
 Analytics source and freshness badges,overview,must,inferred,partial,SearchPilot-specific integrity requirement; sample badge exists
 Domain overview research,domain,must,yes,no,"P04; existing domain screen is illustrative only, with static traffic, authority, backlink and keyword estimates; no measured domain-research provider"
@@ -10,11 +10,11 @@ Organic position changes historical filters,organic rankings,should,yes,no,P07; 
 Keyword overview SERP and difficulty,keywords,should,yes,no,P08; needs licensed SERP/volume source
 Keyword Magic seed search and groups,keywords,must,yes,no,"P09/P10; the current keyword page searches existing manually added tracked terms, not new seed-derived suggestions, groups, or Questions"
 "Keyword Magic match, intent and difficulty filters",keywords,should,yes,no,"P09; existing difficulty/position filters apply only to stored tracked terms; research match type, intent and provider filters are absent"
-Keyword Strategy Builder and clusters,keywords,should,yes,no,P11; pillar/topic cluster future phase
-Keyword Gap between competitor sites,competitive research,should,yes,no,P12; separate SERP dataset required
+Keyword Strategy Builder and clusters,keywords,should,yes,yes,"Persistent manual user-organized lists, clusters, notes and priorities; not automated recommendations. Isolated strategy API suite passed 16/16."
+Keyword Gap between competitor sites,competitive research,should,yes,partial,Two authorized workspace projects can compare user-imported keyword sets; no independently collected competitor SERP dataset.
 Create tracked keyword with project,tracking,must,yes,yes,P13/P14; PostgreSQL keyword rows; manually supplied attributes
 Remove tracked keyword,tracking,must,yes,yes,"P13/P14; local API delete, separate from Semrush behavior"
-Tracking campaign target engine device locale,tracking,must,yes,no,P13; existing project no engine/device/locale campaign config
+Tracking campaign target engine device locale,tracking,must,yes,yes,"Tenant-scoped campaign config with engine, device, country and locale plus imported observations; not automated SERP sampling."
 Position Tracking rank snapshot dashboard,tracking,must,yes,partial,"P14; local manually populated ranking, trend illustrative"
 Position Tracking timeseries and rank changes,tracking,must,yes,partial,"P14; tenant-scoped /api/rankings supports stored manual timestamped observations, but UI charts remain static SAMPLE and historical comparison is not wired to API"
 Position Tracking competitor discovery,tracking,could,yes,no,P14; requires observed SERP datasets
@@ -28,9 +28,9 @@ Site Audit thematic reports,audit,should,yes,no,P17; technical crawlability/HTTP
 Audit history persisted in PostgreSQL,audit,must,yes,yes,SearchPilot-specific schema; PostgreSQL if configured
 Backlinks Overview metrics and visualizations,backlinks,must,yes,no,"P20; cards and trend use hard-coded illustrative counts; no backlink measurements, provider or live index to perform overview analysis"
 Backlinks and referring domains table,backlinks,must,yes,no,"P21; visible referring-domain rows are static illustrative names; no real backlinks, filters, provenance or source drilldown"
-Backlink Audit review workflow,backlinks,should,yes,no,P22/P23; toxicity is never automatically authoritative
-Backlink Gap competitor comparison,backlinks,could,yes,no,P24; licensed or independent link data required
-Reports gallery and templated editor,reports,should,yes,no,"P25; /reports has a static summary and CSV button, not saved reports, gallery, report templates, editable widgets or preview"
+Backlink Audit review workflow,backlinks,should,yes,yes,Persistent human-only review labels and notes on imported backlinks; no calculated toxicity or automated disavow.
+Backlink Gap competitor comparison,backlinks,could,yes,partial,Two owned projects can compare user-imported referring domains; no licensed competitor backlink index.
+Reports gallery and templated editor,reports,should,yes,partial,"Saved editable report layouts plus Solo Snapshot and Client Update presets; limited set, no automated multi-widget gallery."
 Report export and scheduling,reports,should,yes,partial,Tenant-scoped CSV export keywords/manual rank history; PDF/scheduling absent
 Google Search Console and Analytics integrations,integrations,should,yes,partial,"P03/S31; official GSC OAuth/properties/performance backend exists but live OAuth unverified, no connect/property UI, and Google Analytics integration absent"
 Responsiveness and accessibility states,ui,must,inferred,partial,SearchPilot design requirement; inferred exact Semrush mobile states
@@ -45,6 +45,14 @@ Authenticated internal UI and private endpoints,private,skip,unverified,skip,Pub
 Existing user network and partner agreements,partners,skip,yes,skip,Not transferable to independently built SearchPilot
 Account registration and login,accounts,must,inferred,yes,"SearchPilot local scrypt accounts, signed revocable HttpOnly cookie sessions; requires PostgreSQL and migration"
 Authenticated workspace isolation,security,must,inferred,yes,Backend project/keyword/audit route scoped by workspace membership; legacy unowned records excluded
-Edit and delete owned projects,workspace,must,inferred,partial,"PATCH/DELETE /api/projects are authorized and persistent, and editing exists in the UI, but no project delete action or confirmation is exposed through components/workspace.tsx; end-user delete flow incomplete"
+Edit and delete owned projects,workspace,must,inferred,yes,Authenticated UI supports confirmed deletion and editing; isolated Playwright project-delete flow passed.
 Account settings and sign out,accounts,should,inferred,partial,Account/session display and logout; profile/password management and invitations planned
 Audit history and issue filtering,audit,should,inferred,yes,"SearchPilot /api/audit persists homepage scan history, and /site-audit has run selector, pass/issue filter and expandable guidance; page-level comparisons remain a separate gap"
+Transparent plan limits and metered-usage dashboard,commercial,must,no,partial,"Guided setup shows real workspace-owned projects, keywords, audits, reports, imports and members via /api/usage; no paid plan or metered billing exists, so no actual cap/meter."
+One-click source-labeled SMB client report templates,reports,must,no,yes,Solo Snapshot and Client Update editable presets with manually sourced records and browser PDF print; no scheduled sends or verified external SERP.
+Metric-level evidence and freshness states,analytics integrity,must,no,partial,"Authenticated overview, domain, backlinks, reports no longer display fake measured traffic/authority; provenance labels and GSC import scope shown, further per-metric coverage needed."
+Beginner onboarding and contextual glossary,onboarding,should,no,yes,"/get-started provides three steps linked to projects, verified GSC, homepage audit and report, progress from live workspace records and six-term glossary. Targeted desktop/mobile Axe checks passed."
+First-party starter plan and optional bring-your-own provider,plans,should,no,no,ENT-05; solo fit 3/2; GSC exists but billing/plan enforcement and provider adapters do not.
+Included viewer seats and expiring report sharing,collaboration,should,no,partial,ENT-06; invitations and viewer/editor access exist; pricing inclusions and customer-safe report sharing absent.
+Scheduled client reports with delivery history,reports,should,no,no,ENT-07; reporting 3/2; worker/email transport absent.
+Self-service cancellation receipts and data portability,billing,should,no,no,ENT-08; billing 3/1 THIN; only relevant once paid subscriptions are introduced.
