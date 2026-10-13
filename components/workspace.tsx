@@ -295,7 +295,7 @@ export default function Workspace({ section = 'overview' }: { section?: string }
     return <div className="app-shell">
         <a className="ui-skip-link" href="#main-content">Skip to main content</a>
         <header className="topbar">
-            <div className="brand"><span className="brand-mark"><ChartNoAxesCombined size={23} strokeWidth={2.7} aria-hidden="true" /></span><span>Search<span className="brand-accent">Pilot</span></span></div>
+            <div className="brand"><span className="brand-mark"><img src="/brand/searchpilot-mark.svg" alt="" width="35" height="35" /></span><span>Search<span className="brand-accent">Pilot</span></span></div>
             <button ref={menuButtonRef} type="button" className="mobile-menu" onClick={() => setMobile(open => !open)} aria-label={mobile ? 'Close navigation menu' : 'Open navigation menu'} aria-controls="primary-navigation" aria-expanded={mobile}><Menu size={22} aria-hidden="true" /></button>
             <span className="topbar-separator" /><div className="topbar-label">SEO Command Center <ChevronRight size={14} aria-hidden="true" /><span>{title}</span></div>
             <div className="topbar-right">

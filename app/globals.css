@@ -314,3 +314,15 @@ body { color: var(--ui-ink); background: var(--ui-canvas); }
 @media(max-width:800px){
   .auth-mobile-brand span{color:#5540b0;}
 }
+/* Original SearchPilot brand adaptation: warm paper, pine-green, copper signal. */
+:root{color:#1B332D;background:#F8F6F1}
+.app-shell{--sp-accent:#13664E;--sp-on-accent:#FFFFFF;--sp-nav-bg:#172F2B;--sp-chart-a:#13664E;--sp-chart-b:#B7773A;--sp-focus:#13664E;--sp-bg:#F8F6F1;--sp-text:#1B332D}
+.app-shell .brand-mark{width:39px;height:39px;background:none!important;box-shadow:none!important;border-radius:12px;padding:0;display:grid;place-items:center}
+.app-shell .brand-mark img{display:block;width:39px;height:39px;border-radius:12px}
+.app-shell .brand-accent{color:#B7773A}
+.app-shell .topbar{background:linear-gradient(110deg,#172F2B,#24493D 72%,#305A49)!important}
+.app-shell .sidebar{background:#FFFCF7}
+.app-shell .welcome,.app-shell .report-banner,.app-shell .onboard-hero{background:linear-gradient(115deg,#172F2B,#24543D)!important}
+.app-shell .btn.primary,.app-shell .btn-primary,.app-shell .button.primary{background:#13664E;color:#FFFFFF}
+.app-shell .positive,.app-shell .text-link{color:#13664E}
+.app-shell a:focus-visible,.app-shell button:focus-visible,.app-shell input:focus-visible{outline-color:#13664E}

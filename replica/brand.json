@@ -1,0 +1,12 @@
+{
+  "name": "SearchPilot",
+  "status": "provisional_pending_naming_clearance",
+  "positioning": "First-party SEO clarity and credible client reporting for solo owners and small teams",
+  "tagline": "Clear SEO. Real sources.",
+  "voice": ["clear", "reassuring", "precise"],
+  "avoid": ["Semrush", "SEMrush", "Semrush Inc"],
+  "domains": ["semrush.com"],
+  "colors": ["#FF642D", "#FF622D"],
+  "palette": {"pine":"#172F2B", "forest":"#13664E", "copper":"#B7773A", "paper":"#F8F6F1", "ink":"#1B332D", "white":"#FFFFFF"},
+  "assets": {"symbol":"public/brand/searchpilot-mark.svg", "wordmark":"public/brand/searchpilot-wordmark.svg", "favicon":"app/icon.svg", "ios_icon":"app/apple-icon.png", "app_icon":"public/brand/searchpilot-app-icon.png", "social":"public/brand/searchpilot-social.svg"}
+}
