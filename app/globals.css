@@ -240,7 +240,7 @@ body { color: var(--ui-ink); background: var(--ui-canvas); }
 .auth-submit{width:100%;min-height:49px;margin-top:9px;font-size:13px}
 .auth-switch{text-align:center;font-size:12px;margin:26px 0 0;color:#687389}
 .auth-switch a{font-weight:800;color:var(--sp-accent,#5840c9)}
-.auth-privacy{text-align:center;margin-top:34px;font-size:10px;color:#818b9b;line-height:1.6}
+.auth-privacy{text-align:center;margin-top:34px;font-size:12px;color:var(--sp-text-muted);line-height:1.6}
 .auth-error{margin-bottom:18px}
 .workspace-project-control{display:flex;align-items:center;gap:7px;background:#fbfaff;border:1px solid #e5e1f4;border-radius:10px;padding:12px;margin:8px 0 25px;color:#7761cf}
 .workspace-project-control select{min-width:0;flex:1;background:transparent;border:0;appearance:none;color:#323550;font-size:11px;font-weight:750;outline:none;cursor:pointer}
@@ -278,3 +278,13 @@ body { color: var(--ui-ink); background: var(--ui-canvas); }
 @media(max-width:950px){.settings-layout{grid-template-columns:1fr}}
 @media(max-width:800px){.auth-layout{grid-template-columns:1fr}.auth-aside{display:none}.auth-mobile-brand{display:block;margin-bottom:30px}.auth-form-side{min-height:100vh}}
 @media(max-width:480px){.auth-form-side{padding:30px 18px}.auth-form-card h2{font-size:27px}.functional-toolbar{padding:15px 12px}.functional-toolbar .input-search{min-width:100%}.functional-toolbar>label:not(.input-search){width:100%;justify-content:space-between}.functional-toolbar select{width:65%;max-width:none}.audit-finding summary{padding:13px 12px;gap:8px}.audit-finding-body{padding-left:46px}}
+
+/* Accessible contrast for secondary labels, metrics and sidebar actions. */
+.app-shell .avatar{background:var(--sp-accent-subtle-text);color:var(--sp-on-accent)}
+.app-shell .sidebar-project-title,.app-shell .nav-label,
+.app-shell .upgrade p,.app-shell .breadcrumbs,
+.app-shell .intro p,.app-shell .ui-metric__foot,
+.app-shell .ui-metric__foot span,.app-shell .project-create small,
+.app-shell .project-create strong,.app-shell .project-card small,
+.app-shell footer,.app-shell footer span{color:var(--sp-text-muted)}
+.app-shell .upgrade button{color:var(--sp-accent-subtle-text)}

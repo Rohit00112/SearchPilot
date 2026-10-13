@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { databaseAvailable, getPool, normalizeDomain } from "@/lib/db";
 import { demoAudits } from "@/lib/demo";
-import { errorResponse } from "@/lib/response";
 import {authorize,csrf,demoAllowed,deny,forbidden} from '@/lib/auth';
 import {AuditFetchError,fetchAuditHtml} from '@/lib/audit-fetch';
 import {limitResponse,limitedJson,remoteClient,requestError,RequestBodyError} from '@/lib/rate-limit';
+import {uuid,responseError} from '@/lib/validation';
 
 export const runtime = "nodejs";
 
@@ -33,13 +33,14 @@ export async function GET(request: NextRequest) {
   if (!databaseAvailable) return demoAllowed()?NextResponse.json({ audits: demoAudits.filter((a) => !projectId || a.projectId === projectId), demo: true }):deny();
   try {
     const session=await authorize(request);if(!session)return deny();
+    if(projectId)uuid(projectId,'project ID');
     const { rows } = await getPool().query(
       `SELECT id, project_id AS "projectId", domain, score, checks, checked_at AS "checkedAt"
        FROM audits WHERE workspace_id=$1 AND ($2::uuid IS NULL OR project_id = $2::uuid)
        ORDER BY checked_at DESC LIMIT 40`, [session.workspaceId,projectId || null],
     );
     return NextResponse.json({ audits: rows, demo: false });
-  } catch (error) { return errorResponse(error); }
+  } catch (error) { return responseError(error,'Unable to load audit history.'); }
 }
 
 export async function POST(request: NextRequest) {
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await limitedJson(request);
     const domain = normalizeDomain(String(body.domain ?? ""));
-    const projectId=body.projectId?String(body.projectId):null;
+    const projectId=body.projectId==null?null:uuid(body.projectId,'project ID');
     const session=databaseAvailable?await authorize(request,'editor'):null;
     if(databaseAvailable&&!session)return forbidden();
     const throttled=await limitResponse({
@@ -75,6 +76,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if(error instanceof AuditFetchError)return NextResponse.json({error:error.message},{status:422});
     if(error instanceof RequestBodyError)return requestError(error,'Invalid audit request.');
-    return errorResponse(error,503);
+    return responseError(error,'Unable to complete audit.');
   }
 }

@@ -10,6 +10,12 @@ services:
       - "127.0.0.1:5432:5432"
     volumes:
       - searchpilot_pg:/var/lib/postgresql/data
-      - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+      # Executed in lexical order only when PostgreSQL initializes a new volume.
+      # Existing volumes use npm run db:migrate (do not delete the volume).
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/00_schema.sql:ro
+      - ./db/migrations/001_local_auth_workspaces.sql:/docker-entrypoint-initdb.d/01_local_auth_workspaces.sql:ro
+      - ./db/migrations/002_rank_reports.sql:/docker-entrypoint-initdb.d/02_rank_reports.sql:ro
+      - ./db/migrations/003_security_limits.sql:/docker-entrypoint-initdb.d/03_security_limits.sql:ro
+      - ./db/migrations/004_gsc.sql:/docker-entrypoint-initdb.d/04_gsc.sql:ro
 volumes:
   searchpilot_pg:

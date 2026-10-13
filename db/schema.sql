@@ -1,3 +1,7 @@
+-- SearchPilot ACTIVE DATABASE: bootstrap schema (v0), deliberately small.
+-- New Docker volumes apply the additive files in db/migrations/ after this file.
+-- Existing volumes use `npm run db:migrate`; never apply replica/schema.sql here.
+-- See db/SCHEMA.md for the 12-table installed model vs. future blueprint.
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE TABLE IF NOT EXISTS projects (

@@ -27,16 +27,15 @@ The user must create their own Google Cloud OAuth client with Search Console API
 
 ## Migrations and operations
 
-The target `replica/schema.sql` is **not** the installed schema. Apply the additive migrations sequentially after backing up the existing database:
+The target `replica/schema.sql` is **not** the installed schema. The current model is `db/schema.sql` followed by migrations 001–004. Back up the database, then use the tracked migration runner:
 
 ```sh
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/001_local_auth_workspaces.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/002_rank_reports.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/003_security_limits.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/004_gsc.sql
+npm run db:status
+npm run db:migrate
+npm run db:status
 ```
 
-Migration 001 leaves legacy unowned rows unassigned and invisible until ownership is verified. Do not apply the migration twice without confirming idempotency. Database and outbound request worker limits need separate production operational controls.
+The runner checks expected tables, indexes and constraints and tracks immutable migration checksums. Migration 001 leaves legacy unowned rows invisible until ownership is verified. See [db/SCHEMA.md](../db/SCHEMA.md) for current vs future structure; production database/networking still needs separate operational controls.
 
 ## Security checklist
 

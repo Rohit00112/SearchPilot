@@ -1,4 +1,6 @@
 -- SearchPilot future PostgreSQL architecture blueprint (PostgreSQL 17+).
+-- NOT USED BY THE RUNNING APPLICATION OR DOCKER COMPOSE.
+-- Current authority: db/schema.sql + db/migrations/*.sql (see db/SCHEMA.md).
 --
 -- GREENFIELD ONLY. This is NOT a migration and MUST NOT be executed against
 -- the running SearchPilot database. Current app/api routes rely on the existing

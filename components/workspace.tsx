@@ -95,6 +95,10 @@ export default function Workspace({ section = 'overview' }: { section?: string }
                 const preferred = x === 'demo-1' && stored ? stored : x;
                 return pr.projects.some((a: Project) => a.id === preferred) ? preferred : pr.projects[0].id;
             });
+            else {
+                setActive('');
+                window.sessionStorage.removeItem('searchpilot-active-project');
+            }
             if (pr.projects.length) {
                 const ar = await fetch('/api/audit?projectId=' + encodeURIComponent(pr.projects[0].id), { cache: 'no-store' });
                 if (ar.ok) { const a = await ar.json(); if (Array.isArray(a.audits)) setAudits(a.audits); }

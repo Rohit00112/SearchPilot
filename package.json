@@ -6,7 +6,11 @@
         "dev": "next dev",
         "build": "next build",
         "start": "next start",
-        "lint": "tsc --noEmit"
+        "lint": "tsc --noEmit",
+        "db:status": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/db-migrate.mjs status",
+        "db:migrate": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/db-migrate.mjs migrate",
+        "test:e2e": "playwright test",
+        "test:e2e:list": "playwright test --list"
     },
     "dependencies": {
         "lucide-react": "^0.468.0",
@@ -17,6 +21,8 @@
         "recharts": "^2.15.4"
     },
     "devDependencies": {
+        "@axe-core/playwright": "^4.13.0",
+        "@playwright/test": "^1.64.0",
         "@types/node": "^22.18.0",
         "@types/pg": "^8.23.1",
         "@types/react": "^19.1.0",

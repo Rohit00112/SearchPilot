@@ -1,22 +1,22 @@
 feature,area,priority,original,clone,notes
 "Folder list, search and selection",workspace,must,yes,partial,P02; searchable projects and persistent active selection; folder tags/pins absent
 Create and rename site workspaces,workspace,must,yes,partial,P02; project create and rename/update/delete available; full folder tags/sharing not implemented
-Folder sharing and access roles,workspace,should,yes,no,P02; Viewer/Editor role workflow
+Folder sharing and access roles,workspace,should,yes,partial,"P02; backend owner/editor/viewer permissions and tenant checks exist, but no sharing/invite/member management UI or collaborator onboarding"
 SEO overview dashboard,overview,must,yes,partial,"P03; synthetic sample metrics, no connected analytics"
 Analytics source and freshness badges,overview,must,inferred,partial,SearchPilot-specific integrity requirement; sample badge exists
-Domain overview research,domain,must,yes,partial,P04; sample cards only; no provider measurements
+Domain overview research,domain,must,yes,no,"P04; existing domain screen is illustrative only, with static traffic, authority, backlink and keyword estimates; no measured domain-research provider"
 Organic rankings overview and positions,organic rankings,must,yes,no,P05/P06; no independent rankings index
 Organic position changes historical filters,organic rankings,should,yes,no,P07; requires longitudinal ranking observations
 Keyword overview SERP and difficulty,keywords,should,yes,no,P08; needs licensed SERP/volume source
-Keyword Magic seed search and groups,keywords,must,yes,partial,"P09/P10; keyword tracking UI exists, no generated research dataset"
-"Keyword Magic match, intent and difficulty filters",keywords,should,yes,partial,Position and difficulty filters are local to tracked keywords; match type and intent/provider research unavailable
+Keyword Magic seed search and groups,keywords,must,yes,no,"P09/P10; the current keyword page searches existing manually added tracked terms, not new seed-derived suggestions, groups, or Questions"
+"Keyword Magic match, intent and difficulty filters",keywords,should,yes,no,"P09; existing difficulty/position filters apply only to stored tracked terms; research match type, intent and provider filters are absent"
 Keyword Strategy Builder and clusters,keywords,should,yes,no,P11; pillar/topic cluster future phase
 Keyword Gap between competitor sites,competitive research,should,yes,no,P12; separate SERP dataset required
 Create tracked keyword with project,tracking,must,yes,yes,P13/P14; PostgreSQL keyword rows; manually supplied attributes
 Remove tracked keyword,tracking,must,yes,yes,"P13/P14; local API delete, separate from Semrush behavior"
 Tracking campaign target engine device locale,tracking,must,yes,no,P13; existing project no engine/device/locale campaign config
 Position Tracking rank snapshot dashboard,tracking,must,yes,partial,"P14; local manually populated ranking, trend illustrative"
-Position Tracking timeseries and rank changes,tracking,must,yes,partial,Manual timestamped rank observations with project/keyword membership and pagination; no automated SERP provider
+Position Tracking timeseries and rank changes,tracking,must,yes,partial,"P14; tenant-scoped /api/rankings supports stored manual timestamped observations, but UI charts remain static SAMPLE and historical comparison is not wired to API"
 Position Tracking competitor discovery,tracking,could,yes,no,P14; requires observed SERP datasets
 Position Tracking Landscape overview,tracking,should,yes,no,P15; no dedicated page
 Position Tracking keyword tags and notes,tracking,should,yes,no,P14; no persistent annotation model
@@ -26,13 +26,13 @@ Site Audit issue severity and explanations,audit,must,yes,partial,P18; recommend
 Site Audit crawled pages and comparisons,audit,should,yes,no,P17/P19; no multi-page crawl/history comparison
 Site Audit thematic reports,audit,should,yes,no,P17; technical crawlability/HTTPS etc beyond homepage
 Audit history persisted in PostgreSQL,audit,must,yes,yes,SearchPilot-specific schema; PostgreSQL if configured
-Backlinks Overview metrics and visualizations,backlinks,must,yes,partial,P20; illustrative mock data only
-Backlinks and referring domains table,backlinks,must,yes,partial,P21; illustrative table; no actual backlink index
+Backlinks Overview metrics and visualizations,backlinks,must,yes,no,"P20; cards and trend use hard-coded illustrative counts; no backlink measurements, provider or live index to perform overview analysis"
+Backlinks and referring domains table,backlinks,must,yes,no,"P21; visible referring-domain rows are static illustrative names; no real backlinks, filters, provenance or source drilldown"
 Backlink Audit review workflow,backlinks,should,yes,no,P22/P23; toxicity is never automatically authoritative
 Backlink Gap competitor comparison,backlinks,could,yes,no,P24; licensed or independent link data required
-Reports gallery and templated editor,reports,should,yes,partial,P25; simplified report screen only
+Reports gallery and templated editor,reports,should,yes,no,"P25; /reports has a static summary and CSV button, not saved reports, gallery, report templates, editable widgets or preview"
 Report export and scheduling,reports,should,yes,partial,Tenant-scoped CSV export keywords/manual rank history; PDF/scheduling absent
-Google Search Console and Analytics integrations,integrations,should,yes,partial,Official GSC OAuth/property import API implemented; requires user-owned Google client credentials; Google Analytics not integrated
+Google Search Console and Analytics integrations,integrations,should,yes,partial,"P03/S31; official GSC OAuth/properties/performance backend exists but live OAuth unverified, no connect/property UI, and Google Analytics integration absent"
 Responsiveness and accessibility states,ui,must,inferred,partial,SearchPilot design requirement; inferred exact Semrush mobile states
 Performance under plan quotas,plans,could,yes,no,P10/P13; product-specific quota design
 AI Visibility toolkit,expansion,could,yes,no,P01/P27; separate product area
@@ -47,4 +47,4 @@ Account registration and login,accounts,must,inferred,yes,"SearchPilot local scr
 Authenticated workspace isolation,security,must,inferred,yes,Backend project/keyword/audit route scoped by workspace membership; legacy unowned records excluded
 Edit and delete owned projects,workspace,must,inferred,yes,PATCH/DELETE projects with editor/owner checks; destructive deletion should show confirmation
 Account settings and sign out,accounts,should,inferred,partial,Account/session display and logout; profile/password management and invitations planned
-Audit history and issue filtering,audit,should,inferred,partial,Single page audit history and pass/warn filter; no multi-page crawl or comparison
+Audit history and issue filtering,audit,should,inferred,yes,"SearchPilot /api/audit persists homepage scan history, and /site-audit has run selector, pass/issue filter and expandable guidance; page-level comparisons remain a separate gap"

@@ -31,7 +31,7 @@ export default function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (mode === 'register' && name.trim().length < 2) { setError('Enter your full name.'); return; }
-    if (password.length < 8) { setError('Password must contain at least 8 characters.'); return; }
+    if (mode === 'register' && password.length < 12) { setError('Password must contain at least 12 characters.'); return; }
     setBusy(true); setError('');
     try {
       const response = await fetch(`/api/auth/${mode}`, {
@@ -65,7 +65,7 @@ export default function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
       <form onSubmit={submit}>
         {mode === 'register' && <Input label="Full name" autoComplete="name" required value={name} onChange={e=>setName(e.target.value)} placeholder="Your name" maxLength={120}/>}
         <Input label="Email address" type="email" autoComplete="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@company.com" maxLength={254}/>
-        <div className="auth-password"><Input label="Password" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'register' ? 'new-password' : 'current-password'} required minLength={8} value={password} onChange={e=>setPassword(e.target.value)} placeholder="At least 8 characters"/>
+        <div className="auth-password"><Input label="Password" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'register' ? 'new-password' : 'current-password'} required minLength={mode === 'register' ? 12 : 1} value={password} onChange={e=>setPassword(e.target.value)} placeholder={mode === 'register' ? 'At least 12 characters' : 'Your password'}/>
           <button type="button" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Hide password':'Show password'}>{showPassword?<EyeOff size={18}/>:<Eye size={18}/>}</button></div>
         <Button type="submit" variant="primary" loading={busy || checking} className="auth-submit">{mode === 'login' ? 'Sign in' : 'Create account'} <ArrowRight size={16}/></Button>
       </form>
